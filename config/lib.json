@@ -113,6 +113,15 @@
             "IOKit"
         ]
     },
+    "sdl": {
+        "source": "sdl",
+        "static-libs-unix": [
+            "sdl3.a"
+        ],
+        "static-libs-windows": [
+            "sdl3.lib"
+        ]
+    },
     "gmp": {
         "source": "gmp",
         "static-libs-unix": [

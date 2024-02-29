@@ -60,6 +60,24 @@
             "path": "LICENSE"
         }
     },
+    "ext-sdl": {
+        "type": "git",
+        "url": "https://github.com/boonkerz/php-sdl",
+        "rev": "sdl3",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "sdl": {
+        "type": "git",
+        "url": "https://github.com/libsdl-org/SDL",
+        "rev": "main",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
     "ext-imagick": {
         "type": "url",
         "url": "https://pecl.php.net/get/imagick",

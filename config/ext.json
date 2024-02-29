@@ -113,6 +113,17 @@
         ],
         "lib-depends-windows": []
     },
+    "sdl": {
+        "type": "external",
+        "arg-type": "custom",
+        "source": "ext-sdl",
+        "lib-depends": [
+            "sdl"
+        ],
+        "lib-depends-windows": [
+            "sdl"
+        ]
+    },
     "gmp": {
         "type": "builtin",
         "arg-type": "with-prefix",
