@@ -20,10 +20,11 @@ class sdl extends WindowsLibraryBase
             ->execWithWrapper(
                 $this->builder->makeSimpleWrapper('cmake'),
                 '-B build ' .
+                '-A x64 ' .
                 '-DCMAKE_BUILD_TYPE=Release ' .
                 //'-DSDL_DISABLE_INSTALL=1 '.
-                '-DSDL_DISABLE_INSTALL_DOCS=1'.
-                '-DSDL_TEST_LIBRARY=0'.
+                '-DSDL_DISABLE_INSTALL_DOCS=1 '.
+                '-DSDL_TEST_LIBRARY=0 '.
                 '-DSDL_STATIC=1 '.
                 '-DSDL_SHARED=1 '.
                 '-DCMAKE_INSTALL_PREFIX=' . BUILD_ROOT_PATH . ' '

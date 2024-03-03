@@ -119,7 +119,7 @@
             "sdl3.a"
         ],
         "static-libs-windows": [
-            "sdl3.lib"
+            "SDL3-static.lib"
         ]
     },
     "gmp": {
