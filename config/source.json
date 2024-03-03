@@ -118,6 +118,16 @@
             "path": "LICENSE"
         }
     },
+    "ext-uuid": {
+        "type": "url",
+        "url": "https://pecl.php.net/get/uuid",
+        "path": "php-src/ext/uuid",
+        "filename": "uuid.tgz",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
     "ext-uv": {
         "type": "url",
         "url": "https://pecl.php.net/get/uv",
@@ -263,6 +273,15 @@
             "path": "LICENSE"
         }
     },
+    "libffi-win": {
+        "type": "git",
+        "rev": "master",
+        "url": "https://github.com/static-php/libffi-win.git",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
     "libiconv": {
         "type": "filelist",
         "url": "https://ftp.gnu.org/gnu/libiconv/",
@@ -329,6 +348,24 @@
         "type": "ghrel",
         "repo": "libssh2/libssh2",
         "match": "libssh2.+\\.tar\\.gz",
+        "license": {
+            "type": "file",
+            "path": "COPYING"
+        }
+    },
+    "libtiff": {
+        "type": "filelist",
+        "url": "https://download.osgeo.org/libtiff/",
+        "regex": "/href=\"(?<file>tiff-(?<version>[^\"]+)\\.tar\\.xz)\"/",
+        "license": {
+            "type": "file",
+            "path": "LICENSE.md"
+        }
+    },
+    "libuuid": {
+        "type": "git",
+        "url": "https://github.com/cloudbase/libuuid.git",
+        "rev": "master",
         "license": {
             "type": "file",
             "path": "COPYING"

@@ -37,8 +37,8 @@ class BuildCliCommand extends BuildCommand
         $this->addOption('with-suggested-exts', 'E', null, 'Build with suggested extensions for selected exts');
         $this->addOption('with-added-patch', 'P', InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED, 'Inject patch script outside');
         $this->addOption('without-micro-ext-test', null, null, 'Disable phpmicro with extension test code');
-
         $this->addOption('with-upx-pack', null, null, 'Compress / pack binary using UPX tool (linux/windows only)');
+        $this->addOption('with-micro-logo', null, InputOption::VALUE_REQUIRED, 'Use custom .ico for micro.sfx (windows only)');
     }
 
     public function handle(): int
@@ -63,6 +63,14 @@ class BuildCliCommand extends BuildCommand
         if ($rule === BUILD_TARGET_ALL) {
             logger()->warning('--build-all option makes `--no-strip` always true, be aware!');
         }
+        if (($rule & BUILD_TARGET_MICRO) === BUILD_TARGET_MICRO && $this->getOption('with-micro-logo')) {
+            $logo = $this->getOption('with-micro-logo');
+            if (!file_exists($logo)) {
+                logger()->error('Logo file ' . $logo . ' not exist !');
+                return static::FAILURE;
+            }
+        }
+
         // Check upx
         $suffix = PHP_OS_FAMILY === 'Windows' ? '.exe' : '';
         if ($this->getOption('with-upx-pack')) {

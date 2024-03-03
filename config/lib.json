@@ -156,7 +156,8 @@
             "libpng",
             "libjpeg",
             "libwebp",
-            "freetype"
+            "freetype",
+            "libtiff"
         ],
         "lib-suggests": [
             "zstd",
@@ -240,6 +241,17 @@
             "ffi.h",
             "fficonfig.h",
             "ffitarget.h"
+        ]
+    },
+    "libffi-win": {
+        "source": "libffi-win",
+        "static-libs-windows": [
+            "libffi.lib"
+        ],
+        "headers-windows": [
+            "ffi.h",
+            "ffitarget.h",
+            "fficonfig.h"
         ]
     },
     "libiconv": {
@@ -326,6 +338,18 @@
         ],
         "lib-suggests": [
             "zlib"
+        ]
+    },
+    "libtiff": {
+        "source": "libtiff",
+        "static-libs-unix": [
+            "libtiff.a"
+        ]
+    },
+    "libuuid": {
+        "source": "libuuid",
+        "static-libs-unix": [
+            "libuuid.a"
         ]
     },
     "libuv": {
