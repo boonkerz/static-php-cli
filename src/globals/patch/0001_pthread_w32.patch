@@ -1,0 +1,19 @@
+Subject: [PATCH] Fix Win32
+---
+Index: sched.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/sched.h b/sched.h
+--- a/sched.h	(revision a301ede8e6a285fe0891c81eaba847d1b702c313)
++++ b/sched.h	(date 1709625683484)
+@@ -57,7 +57,7 @@
+ #if ! defined __MINGW32__ || ! defined __have_typedef_pid_t
+
+ # if defined __MINGW64__ || defined WIN64 || defined _WIN64
+-    typedef __int64 pid_t;
++    typedef int pid_t;
+ # else
+     typedef int pid_t;
+ #endif

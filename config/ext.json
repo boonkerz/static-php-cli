@@ -127,6 +127,14 @@
             "sdl"
         ]
     },
+    "parallel": {
+        "type": "external",
+        "arg-type": "custom",
+        "source": "ext-parallel",
+        "lib-depends-windows": [
+            "pthreadwin32"
+        ]
+    },
     "gmp": {
         "type": "builtin",
         "arg-type": "with-prefix",

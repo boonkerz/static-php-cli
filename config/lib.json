@@ -122,6 +122,15 @@
             "SDL3-static.lib"
         ]
     },
+    "pthreadwin32": {
+        "source": "pthreadwin32",
+        "static-libs-unix": [
+            "libpthread.a"
+        ],
+        "static-libs-windows": [
+            "pthreadVC3.lib"
+        ]
+    },
     "gmp": {
         "source": "gmp",
         "static-libs-unix": [

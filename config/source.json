@@ -69,6 +69,24 @@
             "path": "LICENSE"
         }
     },
+    "ext-parallel": {
+        "type": "git",
+        "url": "https://github.com/boonkerz/parallel.git",
+        "rev": "develop",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "pthreadwin32": {
+        "type": "git",
+        "url": "https://github.com/GerHobbelt/pthread-win32",
+        "rev": "master",
+        "license": {
+            "type": "file",
+            "path": "docs/LICENSE.md"
+        }
+    },
     "sdl": {
         "type": "git",
         "url": "https://github.com/libsdl-org/SDL",

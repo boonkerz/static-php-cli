@@ -133,13 +133,13 @@ abstract class LibraryBase
     {
         if (file_exists($this->source_dir . '/.spc.patched')) {
             $this->patched = true;
+        } elseif ($this->patchBeforeBuild()) {
+            file_put_contents($this->source_dir . '/.spc.patched', 'PATCHED!!!');
         }
+
         // force means just build
         if ($force_build) {
             logger()->info('Building required library [' . static::NAME . ']');
-            if (!$this->patched && $this->patchBeforeBuild()) {
-                file_put_contents($this->source_dir . '/.spc.patched', 'PATCHED!!!');
-            }
             $this->getBuilder()->emitPatchPoint('before-library[ ' . static::NAME . ']-build');
             $this->build();
             $this->getBuilder()->emitPatchPoint('after-library[ ' . static::NAME . ']-build');
