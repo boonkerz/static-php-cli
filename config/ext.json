@@ -121,10 +121,12 @@
         "arg-type": "custom",
         "source": "ext-sdl",
         "lib-depends": [
-            "sdl"
+            "sdl",
+            "sdlttf"
         ],
         "lib-depends-windows": [
-            "sdl"
+            "sdl",
+            "sdlttf"
         ]
     },
     "parallel": {

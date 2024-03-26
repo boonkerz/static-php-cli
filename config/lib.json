@@ -122,6 +122,16 @@
             "SDL3-static.lib"
         ]
     },
+    "sdlttf": {
+        "source": "sdlttf",
+        "static-libs-unix": [
+            "sdl3_ttf.a"
+        ],
+        "static-libs-windows": [
+            "SDL3_ttf-static.lib",
+            "freetype.lib"
+        ]
+    },
     "pthreadwin32": {
         "source": "pthreadwin32",
         "static-libs-unix": [
