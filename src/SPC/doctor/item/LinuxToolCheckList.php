@@ -40,6 +40,15 @@ class LinuxToolCheckList
         'xz',
     ];
 
+    public const TOOLS_ARCH = [
+        'base-devel', 'cmake',
+    ];
+
+    private const PROVIDED_COMMAND = [
+        'binutils-gold' => 'ld.gold',
+        'base-devel' => 'automake',
+    ];
+
     /** @noinspection PhpUnused */
     #[AsCheckItem('if necessary tools are installed', limit_os: 'Linux', level: 999)]
     public function checkCliTools(): ?CheckResult
@@ -49,12 +58,13 @@ class LinuxToolCheckList
         $required = match ($distro['dist']) {
             'alpine' => self::TOOLS_ALPINE,
             'redhat' => self::TOOLS_RHEL,
+            'arch' => self::TOOLS_ARCH,
             default => self::TOOLS_DEBIAN,
         };
         $missing = [];
-        foreach ($required as $cmd) {
-            if ($this->findCommand($cmd) === null) {
-                $missing[] = $cmd;
+        foreach ($required as $package) {
+            if ($this->findCommand(self::PROVIDED_COMMAND[$package] ?? $package) === null) {
+                $missing[] = $package;
             }
         }
         if (!empty($missing)) {
@@ -63,11 +73,28 @@ class LinuxToolCheckList
                 'alpine',
                 'redhat',
                 'Deepin',
+                'arch',
                 'debian' => CheckResult::fail(implode(', ', $missing) . ' not installed on your system', 'install-linux-tools', [$distro, $missing]),
                 default => CheckResult::fail(implode(', ', $missing) . ' not installed on your system'),
             };
         }
         return CheckResult::ok();
+    }
+
+    #[AsCheckItem('if cmake version >= 3.18', limit_os: 'Linux')]
+    public function checkCMakeVersion(): ?CheckResult
+    {
+        $check_cmd = 'cmake --version';
+        $pattern = '/cmake version (.*)/m';
+        $out = shell()->execWithResult($check_cmd, false)[1][0];
+        if (preg_match($pattern, $out, $match)) {
+            $ver = $match[1];
+            if (version_compare($ver, '3.18.0') <= 0) {
+                return CheckResult::fail('cmake version is too low (' . $ver . '), please update it manually!');
+            }
+            return CheckResult::ok($match[1]);
+        }
+        return CheckResult::fail('Failed to get cmake version');
     }
 
     /** @noinspection PhpUnused */
@@ -94,6 +121,7 @@ class LinuxToolCheckList
             'ubuntu', 'debian', 'Deepin' => 'apt-get install -y',
             'alpine' => 'apk add',
             'redhat' => 'dnf install -y',
+            'arch' => 'pacman -S --noconfirm',
             default => throw new RuntimeException('Current linux distro does not have an auto-install script for musl packages yet.'),
         };
         $prefix = '';

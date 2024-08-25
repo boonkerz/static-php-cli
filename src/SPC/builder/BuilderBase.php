@@ -9,6 +9,7 @@ use SPC\exception\FileSystemException;
 use SPC\exception\RuntimeException;
 use SPC\exception\WrongUsageException;
 use SPC\store\Config;
+use SPC\store\FileSystem;
 use SPC\store\SourceManager;
 use SPC\util\CustomExt;
 
@@ -33,7 +34,7 @@ abstract class BuilderBase
     protected string $patch_point = '';
 
     /**
-     * Build libraries
+     * Convert libraries to class
      *
      * @param  array<string>       $sorted_libraries Libraries to build (if not empty, must sort first)
      * @throws FileSystemException
@@ -41,7 +42,29 @@ abstract class BuilderBase
      * @throws WrongUsageException
      * @internal
      */
-    abstract public function buildLibs(array $sorted_libraries);
+    abstract public function proveLibs(array $sorted_libraries);
+
+    /**
+     * Set-Up libraries
+     *
+     * @throws FileSystemException
+     * @throws RuntimeException
+     * @throws WrongUsageException
+     */
+    public function setupLibs(): void
+    {
+        // build all libs
+        foreach ($this->libs as $lib) {
+            $starttime = microtime(true);
+            match ($lib->setup($this->getOption('rebuild', false))) {
+                LIB_STATUS_OK => logger()->info('lib [' . $lib::NAME . '] setup success, took ' . round(microtime(true) - $starttime, 2) . ' s'),
+                LIB_STATUS_ALREADY => logger()->notice('lib [' . $lib::NAME . '] already built'),
+                LIB_STATUS_BUILD_FAILED => logger()->error('lib [' . $lib::NAME . '] build failed'),
+                LIB_STATUS_INSTALL_FAILED => logger()->error('lib [' . $lib::NAME . '] install failed'),
+                default => logger()->warning('lib [' . $lib::NAME . '] build status unknown'),
+            };
+        }
+    }
 
     /**
      * Add library to build.
@@ -140,7 +163,7 @@ abstract class BuilderBase
      * @throws WrongUsageException
      * @internal
      */
-    public function proveExts(array $extensions): void
+    public function proveExts(array $extensions, bool $skip_check_deps = false): void
     {
         CustomExt::loadCustomExt();
         $this->emitPatchPoint('before-php-extract');
@@ -158,6 +181,10 @@ abstract class BuilderBase
             $class = CustomExt::getExtClass($extension);
             $ext = new $class($extension, $this);
             $this->addExt($ext);
+        }
+
+        if ($skip_check_deps) {
+            return;
         }
 
         foreach ($this->exts as $ext) {
@@ -255,6 +282,24 @@ abstract class BuilderBase
         return false;
     }
 
+    public function getMicroVersion(): false|string
+    {
+        $file = FileSystem::convertPath(SOURCE_PATH . '/php-src/sapi/micro/php_micro.h');
+        if (!file_exists($file)) {
+            return false;
+        }
+
+        $content = file_get_contents($file);
+        $ver = '';
+        preg_match('/#define PHP_MICRO_VER_MAJ (\d)/m', $content, $match);
+        $ver .= $match[1] . '.';
+        preg_match('/#define PHP_MICRO_VER_MIN (\d)/m', $content, $match);
+        $ver .= $match[1] . '.';
+        preg_match('/#define PHP_MICRO_VER_PAT (\d)/m', $content, $match);
+        $ver .= $match[1];
+        return $ver;
+    }
+
     /**
      * Get build type name string to display.
      *
@@ -335,6 +380,19 @@ abstract class BuilderBase
         return $this->patch_point;
     }
 
+    /**
+     * Validate libs and exts can be compiled successfully in current environment
+     */
+    public function validateLibsAndExts(): void
+    {
+        foreach ($this->libs as $lib) {
+            $lib->validate();
+        }
+        foreach ($this->exts as $ext) {
+            $ext->validate();
+        }
+    }
+
     public function emitPatchPoint(string $point_name): void
     {
         $this->patch_point = $point_name;
@@ -400,5 +458,30 @@ abstract class BuilderBase
         }
         $php .= "echo '[micro-test-end]';\n";
         return $php;
+    }
+
+    protected function getMicroTestTasks(): array
+    {
+        return [
+            'micro_ext_test' => [
+                'content' => ($this->getOption('without-micro-ext-test') ? '<?php echo "[micro-test-start][micro-test-end]";' : $this->generateMicroExtTests()),
+                'conditions' => [
+                    // program success
+                    function ($ret) { return $ret === 0; },
+                    // program returns expected output
+                    function ($ret, $out) {
+                        $raw_out = trim(implode('', $out));
+                        return str_starts_with($raw_out, '[micro-test-start]') && str_ends_with($raw_out, '[micro-test-end]');
+                    },
+                ],
+            ],
+            'micro_zend_bug_test' => [
+                'content' => ($this->getOption('without-micro-ext-test') ? '<?php echo "hello";' : file_get_contents(ROOT_DIR . '/src/globals/common-tests/micro_zend_mm_heap_corrupted.txt')),
+                'conditions' => [
+                    // program success
+                    function ($ret) { return $ret === 0; },
+                ],
+            ],
+        ];
     }
 }

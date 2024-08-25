@@ -28,7 +28,7 @@ class BSDBuilder extends UnixBuilderBase
         // ---------- set necessary options ----------
         // set C Compiler (default: clang)
         f_putenv('CC=' . $this->getOption('cc', 'clang'));
-        // set C++ Composer (default: clang++)
+        // set C++ Compiler (default: clang++)
         f_putenv('CXX=' . $this->getOption('cxx', 'clang++'));
         // set PATH
         f_putenv('PATH=' . BUILD_ROOT_PATH . '/bin:' . getenv('PATH'));
@@ -86,7 +86,8 @@ class BSDBuilder extends UnixBuilderBase
         SourcePatcher::patchBeforeConfigure($this);
 
         $json_74 = $this->getPHPVersionID() < 80000 ? '--enable-json ' : '';
-        $zts = $this->getOption('enable-zts', false) ? '--enable-zts --disable-zend-signals ' : '';
+        $zts_enable = $this->getPHPVersionID() < 80000 ? '--enable-maintainer-zts --disable-zend-signals' : '--enable-zts --disable-zend-signals';
+        $zts = $this->getOption('enable-zts', false) ? $zts_enable : '';
 
         $enableCli = ($build_target & BUILD_TARGET_CLI) === BUILD_TARGET_CLI;
         $enableFpm = ($build_target & BUILD_TARGET_FPM) === BUILD_TARGET_FPM;
@@ -180,7 +181,7 @@ class BSDBuilder extends UnixBuilderBase
         }
         if ($this->getExt('phar')) {
             $this->phar_patched = true;
-            SourcePatcher::patchMicro(['phar']);
+            SourcePatcher::patchMicroPhar($this->getPHPVersionID());
         }
 
         $enable_fake_cli = $this->getOption('with-micro-fake-cli', false) ? ' -DPHP_MICRO_FAKE_CLI' : '';
@@ -201,7 +202,7 @@ class BSDBuilder extends UnixBuilderBase
         $this->deployBinary(BUILD_TARGET_MICRO);
 
         if ($this->phar_patched) {
-            SourcePatcher::patchMicro(['phar'], true);
+            SourcePatcher::unpatchMicroPhar();
         }
     }
 

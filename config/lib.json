@@ -21,10 +21,8 @@
             "libbz2.a"
         ],
         "static-libs-windows": [
-            [
-                "libbz2.lib",
-                "libbz2_a.lib"
-            ]
+            "libbz2.lib",
+            "libbz2_a.lib"
         ],
         "headers": [
             "bzlib.h"
@@ -36,7 +34,7 @@
             "libcurl.a"
         ],
         "static-libs-windows": [
-            "libcurl.lib"
+            "libcurl_a.lib"
         ],
         "headers": [
             "curl"
@@ -55,7 +53,8 @@
             "libssh2",
             "brotli",
             "nghttp2",
-            "zstd"
+            "zstd",
+            "libcares"
         ],
         "lib-suggests-windows": [
             "brotli",
@@ -71,6 +70,9 @@
         "source": "freetype",
         "static-libs-unix": [
             "libfreetype.a"
+        ],
+        "static-libs-windows": [
+            "libfreetype_a.lib"
         ],
         "headers-unix": [
             "freetype2/freetype/freetype.h",
@@ -199,6 +201,9 @@
         "source": "libavif",
         "static-libs-unix": [
             "libavif.a"
+        ],
+        "static-libs-windows": [
+            "avif.lib"
         ]
     },
     "libcares": {
@@ -278,6 +283,12 @@
         "static-libs-unix": [
             "libjpeg.a",
             "libturbojpeg.a"
+        ],
+        "static-libs-windows": [
+            "libjpeg_a.lib"
+        ],
+        "lib-suggests-windows": [
+            "zlib"
         ]
     },
     "liblz4": {
@@ -299,7 +310,8 @@
             "libpng16.a"
         ],
         "static-libs-windows": [
-            "libpng16_static.lib"
+            "libpng16_static.lib",
+            "libpng_a.lib"
         ],
         "headers-unix": [
             "png.h",
@@ -312,6 +324,18 @@
         ],
         "lib-depends": [
             "zlib"
+        ]
+    },
+    "librabbitmq": {
+        "source": "librabbitmq",
+        "static-libs-unix": [
+            "librabbitmq.a"
+        ],
+        "static-libs-windows": [
+            "rabbitmq.4.lib"
+        ],
+        "lib-depends": [
+            "openssl"
         ]
     },
     "libsodium": {
@@ -350,6 +374,9 @@
         "source": "libuuid",
         "static-libs-unix": [
             "libuuid.a"
+        ],
+        "headers": [
+            "uuid/uuid.h"
         ]
     },
     "libuv": {
@@ -366,6 +393,12 @@
             "libwebpdemux.a",
             "libwebpmux.a",
             "libsharpyuv.a"
+        ],
+        "static-libs-windows": [
+            "libwebp.lib",
+            "libwebpdecoder.lib",
+            "libwebpdemux.lib",
+            "libsharpyuv.lib"
         ]
     },
     "libxml2": {
@@ -423,21 +456,28 @@
             "libzip.a"
         ],
         "static-libs-windows": [
-            [
-                "zip.lib",
-                "libzip_a.lib"
-            ]
+            "zip.lib",
+            "libzip_a.lib"
         ],
         "headers": [
             "zip.h",
             "zipconf.h"
         ],
-        "lib-depends": [
+        "lib-depends-unix": [
             "zlib"
         ],
-        "lib-suggests": [
+        "lib-suggests-unix": [
             "bzip2",
             "xz",
+            "zstd",
+            "openssl"
+        ],
+        "lib-depends-windows": [
+            "zlib",
+            "bzip2",
+            "xz"
+        ],
+        "lib-suggests-windows": [
             "zstd",
             "openssl"
         ]
@@ -522,6 +562,24 @@
             "zstd"
         ]
     },
+    "pthreads4w": {
+        "source": "pthreads4w",
+        "static-libs-windows": [
+            "libpthreadVC3.lib"
+        ]
+    },
+    "qdbm": {
+        "source": "qdbm",
+        "static-libs-unix": [
+            "libqdbm.a"
+        ],
+        "static-libs-windows": [
+            "qdbm_a.lib"
+        ],
+        "headers-windows": [
+            "depot.h"
+        ]
+    },
     "readline": {
         "source": "readline",
         "static-libs-unix": [
@@ -582,10 +640,8 @@
             "liblzma.a"
         ],
         "static-libs-windows": [
-            [
-                "liblzma.lib",
-                "liblzma_a.lib"
-            ]
+            "liblzma.lib",
+            "liblzma_a.lib"
         ],
         "headers-unix": [
             "lzma"
@@ -594,7 +650,7 @@
             "lzma",
             "lzma.h"
         ],
-        "lib-depends": [
+        "lib-depends-unix": [
             "libiconv"
         ]
     },

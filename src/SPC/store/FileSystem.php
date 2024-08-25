@@ -16,7 +16,7 @@ class FileSystem
      */
     public static function loadConfigArray(string $config, ?string $config_dir = null): array
     {
-        $whitelist = ['ext', 'lib', 'source', 'pkg'];
+        $whitelist = ['ext', 'lib', 'source', 'pkg', 'pre-built'];
         if (!in_array($config, $whitelist)) {
             throw new FileSystemException('Reading ' . $config . '.json is not allowed');
         }
@@ -195,7 +195,7 @@ class FileSystem
         }
         try {
             self::extractArchive($filename, $target);
-            self::emitSourceExtractHook($name);
+            self::emitSourceExtractHook($name, $target);
         } catch (RuntimeException $e) {
             if (PHP_OS_FAMILY === 'Windows') {
                 f_passthru('rmdir /s /q ' . $target);
@@ -436,6 +436,21 @@ class FileSystem
         return str_replace(array_keys($replacement), array_values($replacement), $path);
     }
 
+    public static function backupFile(string $path): string
+    {
+        copy($path, $path . '.bak');
+        return $path . '.bak';
+    }
+
+    public static function restoreBackupFile(string $path): void
+    {
+        if (!file_exists($path . '.bak')) {
+            throw new RuntimeException('Cannot find bak file for ' . $path);
+        }
+        copy($path . '.bak', $path);
+        unlink($path . '.bak');
+    }
+
     /**
      * @throws RuntimeException
      * @throws FileSystemException
@@ -503,10 +518,10 @@ class FileSystem
         return file_put_contents($filename, $file);
     }
 
-    private static function emitSourceExtractHook(string $name): void
+    private static function emitSourceExtractHook(string $name, string $target): void
     {
         foreach ((self::$_extract_hook[$name] ?? []) as $hook) {
-            if ($hook() === true) {
+            if ($hook($name, $target) === true) {
                 logger()->info('Patched source [' . $name . '] after extracted');
             }
         }

@@ -43,11 +43,16 @@ static-php-cli（简称 `spc`）有许多特性：
 
 如果你不想自行编译 PHP，可以从本项目现有的示例 Action 下载 Artifact，也可以从自托管的服务器下载。
 
-- [扩展组合 - common](https://dl.static-php.dev/static-php-cli/common/)：common 组合包含了约 [30+](https://dl.static-php.dev/static-php-cli/common/README.txt) 个常用扩展，体积为 22MB 左右。
-- [扩展组合 - bulk](https://dl.static-php.dev/static-php-cli/bulk/)：bulk 组合包含了 [50+](https://dl.static-php.dev/static-php-cli/bulk/README.txt) 个扩展，体积为 70MB 左右。
-- [扩展组合 - minimal](https://dl.static-php.dev/static-php-cli/minimal/)：minimal 组合包含了 [5](https://dl.static-php.dev/static-php-cli/minimal/README.txt) 个扩展，体积为 6MB 左右。
+| 组合名称                                                                | 组合扩展数                                                                      | 系统          | 备注           |
+|---------------------------------------------------------------------|----------------------------------------------------------------------------|-------------|--------------|
+| [common](https://dl.static-php.dev/static-php-cli/common/)          | [30+](https://dl.static-php.dev/static-php-cli/common/README.txt)          | Linux/macOS | 体积为 7.5MB 左右 |
+| [bulk](https://dl.static-php.dev/static-php-cli/bulk/)              | [50+](https://dl.static-php.dev/static-php-cli/bulk/README.txt)            | Linux/macOS | 体积为 25MB 左右  |
+| [minimal](https://dl.static-php.dev/static-php-cli/minimal/)        | [5](https://dl.static-php.dev/static-php-cli/minimal/README.txt)           | Linux/macOS | 体积为 3MB 左右   |
+| [spc-min](https://dl.static-php.dev/static-php-cli/windows/spc-min) | [5](https://dl.static-php.dev/static-php-cli/windows/spc-min/README.txt)   | Windows     | 体积为 3MB 左右   |
+| [spc-max](https://dl.static-php.dev/static-php-cli/windows/spc-max) | [40+](https://dl.static-php.dev/static-php-cli/windows/spc-max/README.txt) | Windows     | 体积为 8.5MB 左右 |
 
-对于 Windows 系统，目前支持的扩展较少，故仅提供 SPC 自身运行的最小扩展组合的 `cli` 和 `micro`：[扩展组合 - spc-min](https://dl.static-php.dev/static-php-cli/windows/spc-min/)。
+> Linux 和 Windows 默认启用了 UPX 压缩，可减小 30~50% 的 PHP 二进制体积。
+> macOS 当前不支持 UPX，所以上述预编译的 macOS 版本体积可能较大。
 
 ## 使用 static-php-cli 构建 PHP
 
@@ -66,12 +71,12 @@ static-php-cli（简称 `spc`）有许多特性：
 |---------|----------------------|----------------------|
 | macOS   | :octocat: :computer: | :octocat: :computer: |
 | Linux   | :octocat: :computer: | :octocat: :computer: |
-| Windows | :computer:           |                      |
+| Windows | :octocat: :computer: |                      |
 | FreeBSD | :computer:           | :computer:           |
 
 当前支持编译的 PHP 版本：
 
-> :warning: 支持，但可能不再提供修复
+> :warning: 支持，但 static-php-cli 作者可能不再提供补丁修复
 > 
 > :heavy_check_mark: 支持
 > 
@@ -83,9 +88,10 @@ static-php-cli（简称 `spc`）有许多特性：
 | 7.3         | :warning:          | phpmicro 和许多扩展不支持 7.3、7.4 版本 |
 | 7.4         | :warning:          | phpmicro 和许多扩展不支持 7.3、7.4 版本 |
 | 8.0         | :heavy_check_mark: | PHP 官方已停止 8.0 的维护            |
-| 8.1         | :heavy_check_mark: |                              |
+| 8.1         | :heavy_check_mark: | PHP 官方仅对 8.1 提供安全更新          |
 | 8.2         | :heavy_check_mark: |                              |
 | 8.3         | :heavy_check_mark: |                              |
+| 8.4         | :x:                | WIP                          |
 
 ### 支持的扩展
 
@@ -107,7 +113,7 @@ static-php-cli（简称 `spc`）有许多特性：
 
 如果你选择了 `debug`，则会在构建时输出所有日志，包括编译的日志，以供排查错误。
 
-### 本地构建（使用 spc 二进制）
+### 本地构建（使用 spc 二进制，推荐）
 
 该项目提供了 static-php-cli 的二进制文件：`spc`。
 您可以使用 `spc` 二进制文件，无需安装任何运行时（用起来就像 golang 程序）。
@@ -118,15 +124,15 @@ static-php-cli（简称 `spc`）有许多特性：
 ```bash
 # Download from self-hosted nightly builds (sync with main branch)
 # For Linux x86_64
-curl -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-x86_64
+curl -fsSL -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-x86_64
 # For Linux aarch64
-curl -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-aarch64
+curl -fsSL -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-linux-aarch64
 # macOS x86_64 (Intel)
-curl -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-macos-x86_64
+curl -fsSL -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-macos-x86_64
 # macOS aarch64 (Apple)
-curl -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-macos-aarch64
+curl -fsSL -o spc https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-macos-aarch64
 # Windows (x86_64, win10 build 17063 or later)
-curl.exe -o spc.exe https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-windows-x64.exe
+curl.exe -fsSL -o spc.exe https://dl.static-php.dev/static-php-cli/spc-bin/nightly/spc-windows-x64.exe
 
 # Add execute perm (Linux and macOS only)
 chmod +x ./spc
@@ -140,6 +146,8 @@ chmod +x ./spc
 自托管 `spc` 由 GitHub Actions 构建，你也可以从 Actions 直接下载：[此处](https://github.com/crazywhalecc/static-php-cli/actions/workflows/release-build.yml)。
 
 ### 本地构建（使用 git 源码）
+
+如果你需要修改 static-php-cli 源码，或者使用 spc 二进制构建有问题，你可以使用 git 源码下载 static-php-cli。
 
 ```bash
 # clone 仓库即可
@@ -174,6 +182,8 @@ bin/spc --version
 ./bin/spc download --all
 # 只拉取编译指定扩展需要的所有依赖（推荐）
 ./bin/spc download --for-extensions="openssl,pcntl,mbstring,pdo_sqlite"
+# 下载依赖时，优先下载有预编译的库（节省编译依赖的时间）
+./bin/spc download --for-extensions="openssl,curl,mbstring,mbregex" --prefer-pre-built
 # 下载编译不同版本的 PHP (--with-php=x.y，推荐 7.3 ~ 8.3)
 ./bin/spc download --for-extensions="openssl,curl,mbstring" --with-php=8.1
 
@@ -181,7 +191,7 @@ bin/spc --version
 ./bin/spc build "bcmath,openssl,tokenizer,sqlite3,pdo_sqlite,ftp,curl" --build-cli --build-micro
 # 编译线程安全版本 (--enable-zts)
 ./bin/spc build "curl,phar" --enable-zts --build-cli
-# 编译后使用 UPX 减小可执行文件体积 (--with-upx-pack) (至少压缩至原来的 30~50%)
+# 编译后使用 UPX 减小可执行文件体积 (仅 Linux、Windows 可用) (至少压缩至原来的 30~50%)
 ./bin/spc build "curl,phar" --enable-zts --build-cli --with-upx-pack
 ```
 
@@ -271,7 +281,7 @@ bin/spc micro:combine my-app.phar -I "memory_limit=4G" -I "disable_functions=sys
 
 另外，添加新扩展的贡献方式，可以参考下方 `进阶`。
 
-如果你想贡献文档内容，请到项目仓库 [static-php/static-php-cli-docs](https://github.com/static-php/static-php-cli-docs) 贡献。
+如果你想贡献文档内容，请直接修改 `docs/` 目录。
 
 ## 赞助本项目
 

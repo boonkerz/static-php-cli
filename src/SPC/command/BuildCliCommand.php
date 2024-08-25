@@ -10,13 +10,14 @@ use SPC\exception\WrongUsageException;
 use SPC\store\FileSystem;
 use SPC\store\SourcePatcher;
 use SPC\util\DependencyUtil;
+use SPC\util\GlobalEnvManager;
 use SPC\util\LicenseDumper;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputOption;
 use ZM\Logger\ConsoleColor;
 
-#[AsCommand('build', 'build PHP')]
+#[AsCommand('build', 'build PHP', ['build:php'])]
 class BuildCliCommand extends BuildCommand
 {
     public function configure(): void
@@ -39,6 +40,7 @@ class BuildCliCommand extends BuildCommand
         $this->addOption('without-micro-ext-test', null, null, 'Disable phpmicro with extension test code');
         $this->addOption('with-upx-pack', null, null, 'Compress / pack binary using UPX tool (linux/windows only)');
         $this->addOption('with-micro-logo', null, InputOption::VALUE_REQUIRED, 'Use custom .ico for micro.sfx (windows only)');
+        $this->addOption('enable-micro-win32', null, null, 'Enable win32 mode for phpmicro (Windows only)');
     }
 
     public function handle(): int
@@ -46,7 +48,7 @@ class BuildCliCommand extends BuildCommand
         // transform string to array
         $libraries = array_map('trim', array_filter(explode(',', $this->getOption('with-libs'))));
         // transform string to array
-        $extensions = array_map('trim', array_filter(explode(',', $this->getArgument('extensions'))));
+        $extensions = $this->parseExtensionList($this->getArgument('extensions'));
 
         // parse rule with options
         $rule = $this->parseRules();
@@ -92,6 +94,9 @@ class BuildCliCommand extends BuildCommand
             if ($this->getOption('no-strip')) {
                 logger()->warning('--with-upx-pack conflicts with --no-strip, --no-strip won\'t work!');
             }
+            if (($rule & BUILD_TARGET_MICRO) === BUILD_TARGET_MICRO) {
+                logger()->warning('Some cases micro.sfx cannot be packed via UPX due to dynamic size bug, be aware!');
+            }
         }
         try {
             // create builder
@@ -104,8 +109,8 @@ class BuildCliCommand extends BuildCommand
             $indent_texts = [
                 'Build OS' => PHP_OS_FAMILY . ' (' . php_uname('m') . ')',
                 'Build SAPI' => $builder->getBuildTypeName($rule),
-                'Extensions (' . count($extensions) . ')' => implode(', ', $extensions),
-                'Libraries (' . count($libraries) . ')' => implode(', ', $libraries),
+                'Extensions (' . count($extensions) . ')' => implode(',', $extensions),
+                'Libraries (' . count($libraries) . ')' => implode(',', $libraries),
                 'Strip Binaries' => $builder->getOption('no-strip') ? 'no' : 'yes',
                 'Enable ZTS' => $builder->getOption('enable-zts') ? 'yes' : 'no',
             ];
@@ -117,7 +122,6 @@ class BuildCliCommand extends BuildCommand
             }
             if ($this->input->getOption('with-upx-pack') && in_array(PHP_OS_FAMILY, ['Linux', 'Windows'])) {
                 $indent_texts['UPX Pack'] = 'enabled';
-                $builder->setOption('upx-exec', FileSystem::convertPath(PKG_ROOT_PATH . '/bin/upx' . $suffix));
             }
             try {
                 $ver = $builder->getPHPVersion();
@@ -131,18 +135,25 @@ class BuildCliCommand extends BuildCommand
             if (!empty($not_included)) {
                 $indent_texts['Extra Exts (' . count($not_included) . ')'] = implode(', ', $not_included);
             }
+            $this->printFormatInfo($this->getDefinedEnvs(), true);
             $this->printFormatInfo($indent_texts);
+
             logger()->notice('Build will start after 2s ...');
             sleep(2);
+
+            // compile libraries
+            $builder->proveLibs($libraries);
+            // check extensions
+            $builder->proveExts($extensions);
+            // validate libs and exts
+            $builder->validateLibsAndExts();
+            // build or install libraries
+            $builder->setupLibs();
 
             if ($this->input->getOption('with-clean')) {
                 logger()->info('Cleaning source dir...');
                 FileSystem::removeDir(SOURCE_PATH);
             }
-            // compile libraries
-            $builder->buildLibs($libraries);
-            // check extensions
-            $builder->proveExts($extensions);
 
             // Process -I option
             $custom_ini = [];
@@ -226,7 +237,18 @@ class BuildCliCommand extends BuildCommand
         return $rule;
     }
 
-    private function printFormatInfo(array $indent_texts): void
+    private function getDefinedEnvs(): array
+    {
+        $envs = GlobalEnvManager::getInitializedEnv();
+        $final = [];
+        foreach ($envs as $env) {
+            $exp = explode('=', $env, 2);
+            $final['Init var [' . $exp[0] . ']'] = $exp[1];
+        }
+        return $final;
+    }
+
+    private function printFormatInfo(array $indent_texts, bool $debug = false): void
     {
         // calculate space count for every line
         $maxlen = 0;
@@ -236,14 +258,14 @@ class BuildCliCommand extends BuildCommand
         foreach ($indent_texts as $k => $v) {
             if (is_string($v)) {
                 /* @phpstan-ignore-next-line */
-                logger()->info($k . ': ' . str_pad('', $maxlen - strlen($k)) . ConsoleColor::yellow($v));
+                logger()->{$debug ? 'debug' : 'info'}($k . ': ' . str_pad('', $maxlen - strlen($k)) . ConsoleColor::yellow($v));
             } elseif (is_array($v) && !is_assoc_array($v)) {
                 $first = array_shift($v);
                 /* @phpstan-ignore-next-line */
-                logger()->info($k . ': ' . str_pad('', $maxlen - strlen($k)) . ConsoleColor::yellow($first));
+                logger()->{$debug ? 'debug' : 'info'}($k . ': ' . str_pad('', $maxlen - strlen($k)) . ConsoleColor::yellow($first));
                 foreach ($v as $vs) {
                     /* @phpstan-ignore-next-line */
-                    logger()->info(str_pad('', $maxlen + 2) . ConsoleColor::yellow($vs));
+                    logger()->{$debug ? 'debug' : 'info'}(str_pad('', $maxlen + 2) . ConsoleColor::yellow($vs));
                 }
             }
         }

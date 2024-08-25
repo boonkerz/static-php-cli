@@ -10,9 +10,9 @@ use SPC\exception\RuntimeException;
 use SPC\exception\WrongUsageException;
 use SPC\store\Config;
 use SPC\store\FileSystem;
-use SPC\store\SourceManager;
 use SPC\store\SourcePatcher;
 use SPC\util\DependencyUtil;
+use SPC\util\GlobalEnvManager;
 
 class WindowsBuilder extends BuilderBase
 {
@@ -33,6 +33,8 @@ class WindowsBuilder extends BuilderBase
     {
         $this->options = $options;
 
+        GlobalEnvManager::init($this);
+
         // ---------- set necessary options ----------
         // set sdk (require visual studio 16 or 17)
         $vs = SystemUtil::findVisualStudio()['version'];
@@ -42,10 +44,13 @@ class WindowsBuilder extends BuilderBase
         $this->zts = $this->getOption('enable-zts', false);
 
         // set concurrency
-        $this->concurrency = SystemUtil::getCpuCount();
+        $this->concurrency = intval(getenv('SPC_CONCURRENCY'));
 
         // make cmake toolchain
         $this->cmake_toolchain_file = SystemUtil::makeCmakeToolchainFile();
+
+        f_mkdir(BUILD_INCLUDE_PATH, recursive: true);
+        f_mkdir(BUILD_LIB_PATH, recursive: true);
     }
 
     /**
@@ -56,9 +61,10 @@ class WindowsBuilder extends BuilderBase
     public function buildPHP(int $build_target = BUILD_TARGET_NONE): void
     {
         // ---------- Update extra-libs ----------
-        $extra_libs = $this->getOption('extra-libs', '');
+        $extra_libs = getenv('SPC_EXTRA_LIBS') ?: '';
         $extra_libs .= (empty($extra_libs) ? '' : ' ') . implode(' ', $this->getAllStaticLibFiles());
-        $this->setOption('extra-libs', $extra_libs);
+        f_putenv('SPC_EXTRA_LIBS=' . $extra_libs);
+
         $enableCli = ($build_target & BUILD_TARGET_CLI) === BUILD_TARGET_CLI;
         $enableFpm = ($build_target & BUILD_TARGET_FPM) === BUILD_TARGET_FPM;
         $enableMicro = ($build_target & BUILD_TARGET_MICRO) === BUILD_TARGET_MICRO;
@@ -73,25 +79,29 @@ class WindowsBuilder extends BuilderBase
         $zts = $this->zts ? '--enable-zts=yes ' : '--enable-zts=no ';
 
         // with-upx-pack for phpmicro
-        $makefile = FileSystem::convertPath(SOURCE_PATH . '/php-src/sapi/micro/Makefile.frag.w32');
-        if ($this->getOption('with-upx-pack', false)) {
-            if (!file_exists($makefile . '.originfile')) {
-                copy($makefile, $makefile . '.originfile');
-                FileSystem::replaceFileStr($makefile, '$(MICRO_SFX):', "_MICRO_UPX = {$this->getOption('upx-exec')} --best $(MICRO_SFX)\n$(MICRO_SFX):");
-                FileSystem::replaceFileStr($makefile, '@$(_MICRO_MT)', "@$(_MICRO_MT)\n\t@$(_MICRO_UPX)");
+        if ($enableMicro && version_compare($this->getMicroVersion(), '0.2.0') < 0) {
+            $makefile = FileSystem::convertPath(SOURCE_PATH . '/php-src/sapi/micro/Makefile.frag.w32');
+            if ($this->getOption('with-upx-pack', false)) {
+                if (!file_exists($makefile . '.originfile')) {
+                    copy($makefile, $makefile . '.originfile');
+                    FileSystem::replaceFileStr($makefile, '$(MICRO_SFX):', '_MICRO_UPX = ' . getenv('UPX_EXEC') . " --best $(MICRO_SFX)\n$(MICRO_SFX):");
+                    FileSystem::replaceFileStr($makefile, '@$(_MICRO_MT)', "@$(_MICRO_MT)\n\t@$(_MICRO_UPX)");
+                }
+            } elseif (file_exists($makefile . '.originfile')) {
+                copy($makefile . '.originfile', $makefile);
+                unlink($makefile . '.originfile');
             }
-        } elseif (file_exists($makefile . '.originfile')) {
-            copy($makefile . '.originfile', $makefile);
-            unlink($makefile . '.originfile');
         }
 
         if (($logo = $this->getOption('with-micro-logo')) !== null) {
             // realpath
             $logo = realpath($logo);
-            $micro_logo = '--enable-micro-logo=' . escapeshellarg($logo) . ' ';
+            $micro_logo = '--enable-micro-logo=' . $logo . ' ';
         } else {
             $micro_logo = '';
         }
+
+        $micro_w32 = $this->getOption('enable-micro-win32') ? ' --enable-micro-win32=yes' : '';
 
         cmd()->cd(SOURCE_PATH . '\php-src')
             ->exec(
@@ -102,7 +112,7 @@ class WindowsBuilder extends BuilderBase
                 '--with-extra-includes=' . BUILD_INCLUDE_PATH . ' ' .
                 '--with-extra-libs=' . BUILD_LIB_PATH . ' ' .
                 ($enableCli ? '--enable-cli=yes ' : '--enable-cli=no ') .
-                ($enableMicro ? ('--enable-micro=yes ' . $micro_logo) : '--enable-micro=no ') .
+                ($enableMicro ? ('--enable-micro=yes ' . $micro_logo . $micro_w32) : '--enable-micro=no ') .
                 ($enableEmbed ? '--enable-embed=yes ' : '--enable-embed=no ') .
                 "{$this->makeExtensionArgs()} " .
                 $zts .
@@ -123,6 +133,8 @@ class WindowsBuilder extends BuilderBase
         if ($enableMicro) {
             logger()->info('building micro');
             $this->buildMicro();
+
+            SourcePatcher::unpatchMicroWin32();
         }
         if ($enableEmbed) {
             logger()->warning('Windows does not currently support embed SAPI.');
@@ -184,25 +196,27 @@ class WindowsBuilder extends BuilderBase
         // phar patch for micro
         if ($this->getExt('phar')) {
             $this->phar_patched = true;
-            SourcePatcher::patchMicro(['phar']);
+            SourcePatcher::patchMicroPhar($this->getPHPVersionID());
         }
 
-        cmd()->cd(SOURCE_PATH . '\php-src')->exec("{$this->sdk_prefix} nmake_micro_wrapper.bat --task-args micro");
-
-        if ($this->phar_patched) {
-            SourcePatcher::patchMicro(['phar'], true);
+        try {
+            cmd()->cd(SOURCE_PATH . '\php-src')->exec("{$this->sdk_prefix} nmake_micro_wrapper.bat --task-args micro");
+        } finally {
+            if ($this->phar_patched) {
+                SourcePatcher::unpatchMicroPhar();
+            }
         }
 
         $this->deployBinary(BUILD_TARGET_MICRO);
     }
 
-    public function buildLibs(array $sorted_libraries): void
+    public function proveLibs(array $sorted_libraries): void
     {
         // search all supported libs
         $support_lib_list = [];
         $classes = FileSystem::getClassesPsr4(
-            ROOT_DIR . '\src\SPC\builder\\' . osfamily2dir() . '\\library',
-            'SPC\\builder\\' . osfamily2dir() . '\\library'
+            ROOT_DIR . '\src\SPC\builder\\' . osfamily2dir() . '\library',
+            'SPC\builder\\' . osfamily2dir() . '\library'
         );
         foreach ($classes as $class) {
             if (defined($class . '::NAME') && $class::NAME !== 'unknown' && Config::getLib($class::NAME) !== null) {
@@ -230,19 +244,6 @@ class WindowsBuilder extends BuilderBase
         foreach ($this->libs as $lib) {
             $lib->calcDependency();
         }
-
-        // extract sources
-        SourceManager::initSource(libs: $sorted_libraries);
-
-        // build all libs
-        foreach ($this->libs as $lib) {
-            match ($lib->tryBuild($this->getOption('rebuild', false))) {
-                BUILD_STATUS_OK => logger()->info('lib [' . $lib::NAME . '] build success'),
-                BUILD_STATUS_ALREADY => logger()->notice('lib [' . $lib::NAME . '] already built'),
-                BUILD_STATUS_FAILED => logger()->error('lib [' . $lib::NAME . '] build failed'),
-                default => logger()->warning('lib [' . $lib::NAME . '] build status unknown'),
-            };
-        }
     }
 
     /**
@@ -262,6 +263,12 @@ class WindowsBuilder extends BuilderBase
      */
     public function sanityCheck(mixed $build_target): void
     {
+        // remove all .dll from `buildroot/bin/`
+        logger()->debug('Removing all .dll files from buildroot/bin/');
+        $dlls = glob(BUILD_BIN_PATH . '\*.dll');
+        foreach ($dlls as $dll) {
+            @unlink($dll);
+        }
         // sanity check for php-cli
         if (($build_target & BUILD_TARGET_CLI) === BUILD_TARGET_CLI) {
             logger()->info('running cli sanity check');
@@ -278,22 +285,20 @@ class WindowsBuilder extends BuilderBase
 
         // sanity check for phpmicro
         if (($build_target & BUILD_TARGET_MICRO) === BUILD_TARGET_MICRO) {
-            if (file_exists(SOURCE_PATH . '\hello.exe')) {
-                @unlink(SOURCE_PATH . '\hello.exe');
-            }
-            file_put_contents(
-                SOURCE_PATH . '\hello.exe',
-                file_get_contents(BUILD_ROOT_PATH . '\bin\micro.sfx') .
-                ($this->getOption('without-micro-ext-test') ? '<?php echo "[micro-test-start][micro-test-end]";' : $this->generateMicroExtTests())
-            );
-            chmod(SOURCE_PATH . '\hello.exe', 0755);
-            [$ret, $output2] = cmd()->execWithResult(SOURCE_PATH . '\hello.exe');
-            $raw_out = trim(implode('', $output2));
-            $condition[0] = $ret === 0;
-            $condition[1] = str_starts_with($raw_out, '[micro-test-start]') && str_ends_with($raw_out, '[micro-test-end]');
-            foreach ($condition as $k => $v) {
-                if (!$v) {
-                    throw new RuntimeException("micro failed sanity check with condition[{$k}], ret[{$ret}], out[{$raw_out}]");
+            $test_task = $this->getMicroTestTasks();
+            foreach ($test_task as $task_name => $task) {
+                $test_file = SOURCE_PATH . '/' . $task_name . '.exe';
+                if (file_exists($test_file)) {
+                    @unlink($test_file);
+                }
+                file_put_contents($test_file, file_get_contents(BUILD_ROOT_PATH . '\bin\micro.sfx') . $task['content']);
+                chmod($test_file, 0755);
+                [$ret, $out] = cmd()->execWithResult($test_file);
+                foreach ($task['conditions'] as $condition => $closure) {
+                    if (!$closure($ret, $out)) {
+                        $raw_out = trim(implode('', $out));
+                        throw new RuntimeException("micro failed sanity check: {$task_name}, condition [{$condition}], ret[{$ret}], out[{$raw_out}]");
+                    }
                 }
             }
         }
@@ -315,9 +320,11 @@ class WindowsBuilder extends BuilderBase
             default => throw new RuntimeException('Deployment does not accept type ' . $type),
         };
 
-        // with-upx-pack for cli
-        if ($this->getOption('with-upx-pack', false) && $type === BUILD_TARGET_CLI) {
-            cmd()->exec($this->getOption('upx-exec') . ' --best ' . escapeshellarg($src));
+        // with-upx-pack for cli and micro
+        if ($this->getOption('with-upx-pack', false)) {
+            if ($type === BUILD_TARGET_CLI || ($type === BUILD_TARGET_MICRO && version_compare($this->getMicroVersion(), '0.2.0') >= 0)) {
+                cmd()->exec(getenv('UPX_EXEC') . ' --best ' . escapeshellarg($src));
+            }
         }
 
         logger()->info('Deploying ' . $this->getBuildTypeName($type) . ' file');

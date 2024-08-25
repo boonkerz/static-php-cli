@@ -37,7 +37,7 @@ class DumpLicenseCommand extends BaseCommand
         $dumper = new LicenseDumper();
         if ($this->getOption('for-extensions') !== null) {
             // 从参数中获取要编译的 extensions，并转换为数组
-            $extensions = array_map('trim', array_filter(explode(',', $this->getOption('for-extensions'))));
+            $extensions = $this->parseExtensionList($this->getOption('for-extensions'));
             // 根据提供的扩展列表获取依赖库列表并编译
             [$extensions, $libraries] = DependencyUtil::getExtsAndLibs($extensions);
             $dumper->addExts($extensions);
@@ -57,8 +57,11 @@ class DumpLicenseCommand extends BaseCommand
             $libraries = DependencyUtil::getLibs($libraries);
             $dumper->addLibs($libraries);
             $dumper->dump($this->getOption('dump-dir'));
-            $this->output->writeln('Dump target dir: ' . $this->getOption('dump-dir'));
-            return static::SUCCESS;
+            return $this->logWithResult(
+                $dumper->dump($this->getOption('dump-dir')),
+                'Dump target dir: ' . $this->getOption('dump-dir'),
+                'Dump failed!'
+            );
         }
         if ($this->getOption('for-sources') !== null) {
             $sources = array_map('trim', array_filter(explode(',', $this->getOption('for-sources'))));

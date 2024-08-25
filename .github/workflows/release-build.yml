@@ -8,22 +8,32 @@ on:
       - published
   workflow_dispatch:
 
+env:
+  PHP_VERSION: 8.2
+  MICRO_VERSION: 8.2.18
+
 jobs:
   build-release-artifacts:
-    name: "Build SPC Binary"
-    runs-on: ubuntu-latest
+    name: "Build SPC Binary for ${{ matrix.operating-system.name }}"
+    runs-on: ${{ matrix.operating-system.os }}
     strategy:
       matrix:
-        php-version:
-          - "8.2"
-        micro-version:
-          - "8.2.16"
         operating-system:
-          - "linux-x86_64"
-          - "macos-x86_64"
-          - "linux-aarch64"
-          - "macos-aarch64"
-          - "windows-x64"
+          - name: "linux-x86_64"
+            os: "ubuntu-latest"
+            filename: "spc-linux-x86_64.tar.gz"
+          - name: "macos-x86_64"
+            os: "macos-13"
+            filename: "spc-macos-x86_64.tar.gz"
+          - name: "linux-aarch64"
+            os: "ubuntu-latest"
+            filename: "spc-linux-aarch64.tar.gz"
+          - name: "macos-aarch64"
+            os: "macos-14"
+            filename: "spc-macos-aarch64.tar.gz"
+          - name: "windows-x64"
+            os: "ubuntu-latest"
+            filename: "spc-windows-x64.exe"
     steps:
       - name: "Checkout"
         uses: "actions/checkout@v4"
@@ -36,7 +46,7 @@ jobs:
         with:
           coverage: none
           tools: composer:v2
-          php-version: "${{ matrix.php-version }}"
+          php-version: "${{ env.PHP_VERSION }}"
           ini-values: memory_limit=-1
 
       - name: "Get Composer Cache Directory"
@@ -45,12 +55,12 @@ jobs:
           echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: "Cache Composer dependencies"
-        uses: "actions/cache@v3"
+        uses: "actions/cache@v4"
         with:
           path: "${{ steps.composer-cache.outputs.dir }}"
-          key: "php-${{ matrix.php-version }}-locked-composer-${{ hashFiles('**/composer.lock') }}"
+          key: "php-${{ env.PHP_VERSION }}-locked-composer-${{ hashFiles('**/composer.lock') }}"
           restore-keys: |
-            php-${{ matrix.php-version }}-locked-composer
+            php-${{ env.PHP_VERSION }}-locked-composer
 
       - name: "Install Locked Dependencies"
         run: "composer install --no-interaction --no-progress"
@@ -58,68 +68,66 @@ jobs:
       - name: "Build PHAR File"
         run: "composer build:phar"
 
-      - name: "Download minimal combination"
+      - name: "Download Minimal Combination"
         run: |
-          if [ "${{ matrix.operating-system }}" = "windows-x64" ]; then
-            curl https://dl.static-php.dev/static-php-cli/windows/spc-min/php-${{ matrix.micro-version }}-micro-win.zip -o tmp.zip
+          if [ "${{ matrix.operating-system.name }}" = "windows-x64" ]; then
+            curl -fsSL https://dl.static-php.dev/static-php-cli/windows/spc-min/php-${{ env.MICRO_VERSION }}-micro-win.zip -o tmp.zip
             unzip tmp.zip
           else
-            curl https://dl.static-php.dev/static-php-cli/minimal/php-${{ matrix.micro-version }}-micro-${{ matrix.operating-system }}.tar.gz -o tmp.tgz
+            curl -fsSL https://dl.static-php.dev/static-php-cli/minimal/php-${{ env.MICRO_VERSION }}-micro-${{ matrix.operating-system.name }}.tar.gz -o tmp.tgz
             tar -zxvf tmp.tgz
           fi
-          
+
       - name: "Generate Executable"
         run: |
           bin/spc micro:combine spc.phar -M micro.sfx -O spc -I "memory_limit=2G"
-          if [ "${{ matrix.operating-system }}" = "windows-x64" ]; then
+          if [ "${{ matrix.operating-system.name }}" = "windows-x64" ]; then
             mv spc spc.exe
           else
             chmod +x spc
           fi
+          if [ "${{ matrix.operating-system.name }}" = "macos-aarch64" ] || [ "${{ matrix.operating-system.name }}" = "macos-x86_64" ]; then
+             sudo xattr -cr ./spc
+          fi
 
-      - name: "Archive Executable"
+      - name: "Archive Executable and Validate Binary"
         run: |
-          if [ "${{ matrix.operating-system }}" != "windows-x64" ]; then
-            tar -czf spc-${{ matrix.operating-system }}.tar.gz spc
-            echo "filename=spc-${{ matrix.operating-system }}.tar.gz" >> $GITHUB_ENV
-            echo "OS=${{ matrix.operating-system }}" >> $GITHUB_ENV
-            if [ "${{ matrix.operating-system }}" == "linux-x86_64" ]; then
+          if [ "${{ matrix.operating-system.name }}" != "windows-x64" ]; then
+            tar -czf ${{ matrix.operating-system.filename }} spc
+            # validate spc binary
+            if [ "${{ matrix.operating-system.name }}" == "linux-x86_64" ]; then
               ./spc dev:extensions
             fi
-          else
-            echo "filename=spc-${{ matrix.operating-system }}.exe" >> $GITHUB_ENV
-            echo "OS=${{ matrix.operating-system }}" >> $GITHUB_ENV
           fi
 
       - name: "Copy file"
         run: |
-          if [ "${{ matrix.operating-system }}" != "windows-x64" ]; then
-            mkdir dist/ && cp ${{ env.filename }} dist/ && cp spc dist/spc-$OS
+          if [ "${{ matrix.operating-system.name }}" != "windows-x64" ]; then
+            mkdir dist/ && cp ${{ matrix.operating-system.filename }} dist/ && cp spc dist/spc-${{ matrix.operating-system.name }}
           else
-            mkdir dist/ && cp spc.exe dist/${{ env.filename }}
+            mkdir dist/ && cp spc.exe dist/${{ matrix.operating-system.filename }}
             echo "SUFFIX=.exe" >> $GITHUB_ENV
           fi
 
-      - name: upload binaries to release
+      - name: "Upload Binaries to Release"
         uses: softprops/action-gh-release@v1
         if: ${{startsWith(github.ref, 'refs/tags/') }}
         with:
-          files: dist/${{ env.filename }}
+          files: dist/${{ matrix.operating-system.filename }}
 
-      - name: "Deploy to Self-Hosted Server"
+      - name: "Deploy to self-hosted OSS"
         if: github.repository == 'crazywhalecc/static-php-cli'
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.DEPLOY_SERVER_SECRET_KEY }}
-          ARGS: "-rltgoDzvO"
-          SOURCE: "dist/"
-          REMOTE_HOST: ${{ secrets.DEPLOY_SERVER_HOST }}
-          REMOTE_PORT: ${{ secrets.DEPLOY_SERVER_PORT }}
-          REMOTE_USER: ${{ secrets.DEPLOY_SERVER_USER }}
-          TARGET: ${{ secrets.DEPLOY_SERVER_TARGET_SPC_NIGHTLY }}
+        uses: static-php/upload-s3-action@v1.0.0
+        with:
+          aws_key_id: ${{ secrets.AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_bucket: ${{ secrets.AWS_BUCKET }}
+          source_dir: "dist/"
+          destination_dir: static-php-cli/spc-bin/nightly/
+          endpoint: ${{ secrets.AWS_ENDPOINT }}
 
       - name: "Upload Artifact"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           path: spc${{ env.SUFFIX }}
-          name: spc-${{ matrix.operating-system }}${{ env.SUFFIX }}
+          name: spc-${{ matrix.operating-system.name }}${{ env.SUFFIX }}

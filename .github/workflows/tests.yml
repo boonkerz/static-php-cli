@@ -8,9 +8,20 @@ on:
       - 'src/globals/test-extensions.php'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'config/**'
+      - '.github/workflows/tests.yml'
+      - 'bin/**'
+      - 'composer.json'
+      - 'box.json'
+      - '.php-cs-fixer.php'
 
 permissions:
   contents: read
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   php-cs-fixer:
@@ -48,7 +59,7 @@ jobs:
 
       - name: "Cache Composer packages"
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
           key: ${{ runner.os }}-phpstan-${{ hashFiles('**/composer.lock') }}
@@ -86,7 +97,7 @@ jobs:
 
       - name: "Cache Composer packages"
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
@@ -113,7 +124,7 @@ jobs:
           - "8.3"
         os:
           - ubuntu-latest
-          - macos-latest
+          - macos-13
           - windows-latest
           - macos-14
       fail-fast: false
@@ -129,16 +140,9 @@ jobs:
           extensions: curl, openssl, mbstring
           ini-values: memory_limit=-1
 
-      - name: "Use test token if exists"
-        if: matrix.os != 'windows-latest'
-        run: |
-          if [ "${{ secrets.TEST_GH_TOKEN }}" != "" ]; then
-            echo "GITHUB_TOKEN=${{ secrets.TEST_GH_TOKEN }}" >> $GITHUB_ENV
-          fi
-
-      - name: "Cache Composer packages"
+      - name: "Cache composer packages"
         id: composer-cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: vendor
           key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
@@ -147,7 +151,7 @@ jobs:
 
       # Cache downloaded source
       - id: cache-download
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: downloads
           key: php-${{ matrix.php }}-dependencies
@@ -158,13 +162,32 @@ jobs:
       - name: "Run Build Tests (doctor)"
         run: bin/spc doctor --auto-fix
 
-      - name: "Run Build Tests (download)"
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 10
-          max_attempts: 3
-          retry_on: error
-          command: bin/spc download --for-extensions="$(php src/globals/test-extensions.php extensions)" --with-php=${{ matrix.php }} --debug
+      - name: "Prepare UPX for Windows"
+        if: matrix.os == 'windows-latest'
+        run: |
+          bin/spc install-pkg upx
+          echo "UPX_CMD=$(php src/globals/test-extensions.php upx)" >> $env:GITHUB_ENV
 
-      - name: "Run Build Tests (build)"
-        run: bin/spc build "$(php src/globals/test-extensions.php extensions)" $(php src/globals/test-extensions.php libs_cmd) --build-cli --build-micro --build-fpm --debug
+      - name: "Prepare UPX for Linux"
+        if: matrix.os == 'ubunut-latest'
+        run: |
+          bin/spc install-pkg upx
+          echo "UPX_CMD=$(php src/globals/test-extensions.php upx)" >> $GITHUB_ENV
+
+      - name: "Run Build Tests (download)"
+        run: |
+          bin/spc download --for-extensions="$(php src/globals/test-extensions.php extensions)" --for-libs="$(php src/globals/test-extensions.php libs)" --with-php=${{ matrix.php }} --ignore-cache-sources=php-src --debug --retry=5 --shallow-clone
+
+      - name: "Download pre-built libraries for pkg-config"
+        if: matrix.os != 'windows-latest'
+        run: |
+          bin/spc del-download pkg-config
+          bin/spc download pkg-config --prefer-pre-built --debug
+
+      - name: "Run Build Tests (build, *nix)"
+        if: matrix.os != 'windows-latest'
+        run: bin/spc build "$(php src/globals/test-extensions.php extensions)" $(php src/globals/test-extensions.php zts) $(php src/globals/test-extensions.php no_strip) $UPX_CMD --with-libs="$(php src/globals/test-extensions.php libs)" --build-cli --build-micro --build-fpm --debug
+
+      - name: "Run Build Tests (build, windows)"
+        if: matrix.os == 'windows-latest'
+        run: bin/spc build "$(php src/globals/test-extensions.php extensions)" $(php src/globals/test-extensions.php zts) $(php src/globals/test-extensions.php no_strip) $env:UPX_CMD --with-libs="$(php src/globals/test-extensions.php libs)" --build-cli --build-micro --debug

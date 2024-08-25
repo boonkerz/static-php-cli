@@ -11,10 +11,16 @@ declare(strict_types=1);
 
 // --------------------------------- edit area ---------------------------------
 
+$zts = false;
+
+$no_strip = false;
+
+$upx = true;
+
 // If you want to test your added extensions and libs, add below (comma separated, example `bcmath,openssl`).
 $extensions = match (PHP_OS_FAMILY) {
-    'Linux', 'Darwin' => 'uuid',
-    'Windows' => 'mbstring,pdo_sqlite,mbregex,ffi',
+    'Linux', 'Darwin' => 'imap,swoole-hook-sqlite,swoole',
+    'Windows' => 'igbinary,redis,session',
 };
 
 // If you want to test lib-suggests feature with extension, add them below (comma separated, example `libwebp,libavif`).
@@ -27,7 +33,7 @@ $with_libs = match (PHP_OS_FAMILY) {
 // You can use `common`, `bulk`, `minimal` or `none`.
 // note: combination is only available for *nix platform. Windows must use `none` combination
 $base_combination = match (PHP_OS_FAMILY) {
-    'Linux', 'Darwin' => 'minimal',
+    'Linux', 'Darwin' => 'none',
     'Windows' => 'none',
 };
 
@@ -62,7 +68,6 @@ $final_libs = trim($with_libs, $trim_value);
 
 if (PHP_OS_FAMILY === 'Windows') {
     $final_extensions_cmd = '"' . $final_extensions . '"';
-    $final_libs = $final_libs === '' ? '' : ('"' . $final_libs . '"');
 } else {
     $final_extensions_cmd = $final_extensions;
 }
@@ -72,5 +77,8 @@ echo match ($argv[1]) {
     'libs' => $final_libs,
     'libs_cmd' => ($final_libs === '' ? '' : (' --with-libs=' . $final_libs)),
     'cmd' => $final_extensions_cmd . ($final_libs === '' ? '' : (' --with-libs=' . $final_libs)),
+    'zts' => $zts ? '--enable-zts' : '',
+    'no_strip' => $no_strip ? '--no-strip' : '',
+    'upx' => $upx ? '--with-upx-pack' : '',
     default => '',
 };

@@ -11,9 +11,10 @@ trait libargon2
     protected function build()
     {
         shell()->cd($this->source_dir)
+            ->setEnv(['CFLAGS' => $this->getLibExtraCFlags(), 'LDFLAGS' => $this->getLibExtraLdFlags(), 'LIBS' => $this->getLibExtraLibs()])
             ->exec("make PREFIX='' clean")
-            ->exec("make -j{$this->builder->concurrency} PREFIX=''")
-            ->exec("make install PREFIX='' DESTDIR=" . BUILD_ROOT_PATH);
+            ->execWithEnv("make -j{$this->builder->concurrency} PREFIX=''")
+            ->execWithEnv("make install PREFIX='' DESTDIR=" . BUILD_ROOT_PATH);
 
         $this->patchPkgconfPrefix(['libargon2.pc']);
 
@@ -21,6 +22,10 @@ trait libargon2
             if (str_starts_with($filename, 'libargon2') && (str_contains($filename, '.so') || str_ends_with($filename, '.dylib'))) {
                 unlink(BUILD_ROOT_PATH . '/lib/' . $filename);
             }
+        }
+
+        if (file_exists(BUILD_BIN_PATH . '/argon2')) {
+            unlink(BUILD_BIN_PATH . '/argon2');
         }
     }
 }
