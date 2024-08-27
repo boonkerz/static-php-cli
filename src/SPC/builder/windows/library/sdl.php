@@ -22,17 +22,17 @@ class sdl extends WindowsLibraryBase
                 '-B build ' .
                 '-A x64 ' .
                 '-DCMAKE_BUILD_TYPE=Release ' .
-                //'-DSDL_DISABLE_INSTALL=1 '.
-                '-DSDL_DISABLE_INSTALL_DOCS=1 '.
-                '-DSDL_TEST_LIBRARY=0 '.
-                '-DSDL_STATIC=1 '.
-                '-DSDL_SHARED=0 '.
-                '-DSDL_LIBC=OFF '.
+                // '-DSDL_DISABLE_INSTALL=1 '.
+                '-DSDL_DISABLE_INSTALL_DOCS=1 ' .
+                '-DSDL_TEST_LIBRARY=0 ' .
+                '-DSDL_STATIC=1 ' .
+                '-DSDL_SHARED=0 ' .
+                '-DSDL_LIBC=OFF ' .
                 '-DCMAKE_INSTALL_PREFIX=' . BUILD_ROOT_PATH . ' '
             )
             ->execWithWrapper(
                 $this->builder->makeSimpleWrapper('cmake'),
-                '--build build --config Release --target install '.
+                '--build build --config Release --target install ' .
                 "-j{$this->builder->concurrency}"
             );
     }
