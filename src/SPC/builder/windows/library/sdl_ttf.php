@@ -6,9 +6,9 @@ namespace SPC\builder\windows\library;
 
 use SPC\store\FileSystem;
 
-class sdl extends WindowsLibraryBase
+class sdl_ttf extends WindowsLibraryBase
 {
-    public const NAME = 'sdl';
+    public const NAME = 'sdl_ttf';
 
     protected function build(): void
     {
@@ -22,17 +22,15 @@ class sdl extends WindowsLibraryBase
                 '-B build ' .
                 '-A x64 ' .
                 '-DCMAKE_BUILD_TYPE=Release ' .
-                //'-DSDL_DISABLE_INSTALL=1 '.
-                '-DSDL_DISABLE_INSTALL_DOCS=1 '.
-                '-DSDL_TEST_LIBRARY=0 '.
-                '-DSDL_STATIC=1 '.
-                '-DSDL_SHARED=0 '.
-                '-DSDL_LIBC=OFF '.
+                // '-DSDL_DISABLE_INSTALL=1 '.
+                '-DSDL_DISABLE_INSTALL_DOCS=1 ' .
+                '-DSDL_TEST_LIBRARY=0 ' .
+                '-DBUILD_SHARED_LIBS=OFF ' .
                 '-DCMAKE_INSTALL_PREFIX=' . BUILD_ROOT_PATH . ' '
             )
             ->execWithWrapper(
                 $this->builder->makeSimpleWrapper('cmake'),
-                '--build build --config Release --target install '.
+                '--build build --config Release --target install ' .
                 "-j{$this->builder->concurrency}"
             );
     }

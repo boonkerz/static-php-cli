@@ -86,7 +86,7 @@
     "ext-sdl": {
         "type": "git",
         "url": "https://github.com/boonkerz/php-sdl",
-        "rev": "sdl3",
+        "rev": "sdl3-clean",
         "license": {
             "type": "file",
             "path": "LICENSE"
@@ -95,6 +95,15 @@
     "sdl": {
         "type": "git",
         "url": "https://github.com/libsdl-org/SDL",
+        "rev": "main",
+        "license": {
+            "type": "file",
+            "path": "LICENSE.txt"
+        }
+    },
+    "sdl_ttf": {
+        "type": "git",
+        "url": "https://github.com/libsdl-org/SDL_ttf",
         "rev": "main",
         "license": {
             "type": "file",

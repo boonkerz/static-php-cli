@@ -183,10 +183,12 @@
         "arg-type": "custom",
         "source": "ext-sdl",
         "lib-depends": [
-            "sdl"
+            "sdl",
+            "sdl_ttf"
         ],
         "lib-depends-windows": [
-            "sdl"
+            "sdl",
+            "sdl_ttf"
         ]
     },
     "gmp": {

@@ -115,6 +115,15 @@
             "IOKit"
         ]
     },
+    "sdl_ttf": {
+        "source": "sdl_ttf",
+        "static-libs-unix": [
+            "sdl3ttf.a"
+        ],
+        "static-libs-windows": [
+            "SDL3_ttf-static.lib"
+        ]
+    },
     "sdl": {
         "source": "sdl",
         "static-libs-unix": [
