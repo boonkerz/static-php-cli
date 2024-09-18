@@ -118,7 +118,7 @@
     "sdl_ttf": {
         "source": "sdl_ttf",
         "static-libs-unix": [
-            "sdl3ttf.a"
+            "libSDL3_ttf.a"
         ],
         "static-libs-windows": [
             "SDL3_ttf-static.lib"
@@ -127,7 +127,7 @@
     "sdl": {
         "source": "sdl",
         "static-libs-unix": [
-            "sdl3.a"
+            "libSDL3.a"
         ],
         "static-libs-windows": [
             "SDL3-static.lib"
