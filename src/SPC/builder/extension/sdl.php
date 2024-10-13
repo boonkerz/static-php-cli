@@ -26,7 +26,7 @@ class sdl extends Extension
 
     public function patchBeforeConfigure(): bool
     {
-       // FileSystem::replaceFileStr(SOURCE_PATH . '/php-src/configure', '-lglfw ', '-lglfw3 ');
+        // FileSystem::replaceFileStr(SOURCE_PATH . '/php-src/configure', '-lglfw ', '-lglfw3 ');
         return true;
     }
 
