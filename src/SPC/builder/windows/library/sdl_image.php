@@ -6,9 +6,9 @@ namespace SPC\builder\windows\library;
 
 use SPC\store\FileSystem;
 
-class sdl extends WindowsLibraryBase
+class sdl_image extends WindowsLibraryBase
 {
-    public const NAME = 'sdl';
+    public const NAME = 'sdl_image';
 
     protected function build(): void
     {
@@ -25,8 +25,7 @@ class sdl extends WindowsLibraryBase
                 // '-DSDL_DISABLE_INSTALL=1 '.
                 '-DSDL_DISABLE_INSTALL_DOCS=1 ' .
                 '-DSDL_TEST_LIBRARY=0 ' .
-                '-DSDL_STATIC=1 ' .
-                '-DSDL_SHARED=0 ' .
+                '-DBUILD_SHARED_LIBS=OFF ' .
                 '-DCMAKE_INSTALL_PREFIX=' . BUILD_ROOT_PATH . ' '
             )
             ->execWithWrapper(

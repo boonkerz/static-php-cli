@@ -115,6 +115,24 @@
             "IOKit"
         ]
     },
+    "sdl_image": {
+        "source": "sdl_image",
+        "static-libs-unix": [
+            "libSDL3_image.a"
+        ],
+        "static-libs-windows": [
+            "SDL3_image-static.lib"
+        ]
+    },
+    "tray": {
+        "source": "tray",
+        "static-libs-unix": [
+            "tray.a"
+        ],
+        "static-libs-windows": [
+            "tray.lib"
+        ]
+    },
     "sdl_ttf": {
         "source": "sdl_ttf",
         "static-libs-unix": [

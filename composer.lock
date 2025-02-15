@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "186e104804f9b096eaf08f153e52fb36",
+    "content-hash": "b73258092b5aeb9da0ea66949f8e5866",
     "packages": [
         {
             "name": "illuminate/collections",
@@ -1994,16 +1994,16 @@
         },
         {
             "name": "captainhook/captainhook-phar",
-            "version": "5.23.4",
+            "version": "5.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/captainhookphp/captainhook-phar.git",
-                "reference": "055e6e109170a1d79353f9c94a6099e08bab15cd"
+                "reference": "de7a0e8a2d4ee7b63f46ac61c6f9a89ff0a30011"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/captainhookphp/captainhook-phar/zipball/055e6e109170a1d79353f9c94a6099e08bab15cd",
-                "reference": "055e6e109170a1d79353f9c94a6099e08bab15cd",
+                "url": "https://api.github.com/repos/captainhookphp/captainhook-phar/zipball/de7a0e8a2d4ee7b63f46ac61c6f9a89ff0a30011",
+                "reference": "de7a0e8a2d4ee7b63f46ac61c6f9a89ff0a30011",
                 "shasum": ""
             },
             "require": {
@@ -2011,7 +2011,7 @@
                 "ext-json": "*",
                 "ext-spl": "*",
                 "phar-io/composer-distributor": "^1.0",
-                "php": "^8.0 || ^8.1 || ^8.2"
+                "php": ">=8.0"
             },
             "require-dev": {
                 "composer/composer": "^1.1 || ^2.0"
@@ -2048,7 +2048,7 @@
             ],
             "support": {
                 "issues": "https://github.com/captainhookphp/captainhook/issues",
-                "source": "https://github.com/captainhookphp/captainhook-phar/tree/5.23.4"
+                "source": "https://github.com/captainhookphp/captainhook-phar/tree/5.25.0"
             },
             "funding": [
                 {
@@ -2056,7 +2056,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-12-13T23:08:05+00:00"
+            "time": "2025-01-16T12:46:49+00:00"
         },
         {
             "name": "captainhook/hook-installer",

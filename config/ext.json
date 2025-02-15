@@ -184,11 +184,15 @@
         "source": "ext-sdl",
         "lib-depends": [
             "sdl",
-            "sdl_ttf"
+            "sdl_ttf",
+            "sdl_image",
+            "tray"
         ],
         "lib-depends-windows": [
             "sdl",
-            "sdl_ttf"
+            "sdl_ttf",
+            "sdl_image",
+            "tray"
         ]
     },
     "gmp": {

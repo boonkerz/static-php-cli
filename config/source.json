@@ -110,6 +110,15 @@
             "path": "LICENSE.txt"
         }
     },
+    "sdl_image": {
+        "type": "git",
+        "url": "https://github.com/libsdl-org/SDL_image",
+        "rev": "main",
+        "license": {
+            "type": "file",
+            "path": "LICENSE.txt"
+        }
+    },
     "ext-imagick": {
         "type": "url",
         "url": "https://pecl.php.net/get/imagick",
@@ -197,6 +206,15 @@
         "license": {
             "type": "file",
             "path": "LICENSE.TXT"
+        }
+    },
+    "tray": {
+        "type": "git",
+        "rev": "master",
+        "url": "https://github.com/boonkerz/tray.git",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
         }
     },
     "gettext": {
