@@ -82,16 +82,18 @@ static-php-cli（简称 `spc`）有许多特性：
 > 
 > :x: 不支持
 
-| PHP Version | Status             | Comment                      |
-|-------------|--------------------|------------------------------|
-| 7.2         | :x:                |                              |
-| 7.3         | :warning:          | phpmicro 和许多扩展不支持 7.3、7.4 版本 |
-| 7.4         | :warning:          | phpmicro 和许多扩展不支持 7.3、7.4 版本 |
-| 8.0         | :heavy_check_mark: | PHP 官方已停止 8.0 的维护            |
-| 8.1         | :heavy_check_mark: | PHP 官方仅对 8.1 提供安全更新          |
-| 8.2         | :heavy_check_mark: |                              |
-| 8.3         | :heavy_check_mark: |                              |
-| 8.4         | :x:                | WIP                          |
+| PHP Version | Status             | Comment                                      |
+|-------------|--------------------|----------------------------------------------|
+| 7.2         | :x:                |                                              |
+| 7.3         | :x:                | phpmicro 和许多扩展不支持 7.3、7.4 版本                 |
+| 7.4         | :x:                | phpmicro 和许多扩展不支持 7.3、7.4 版本                 |
+| 8.0         | :warning:          | PHP 官方已停止 8.0 的维护，我们不再处理 8.0 相关的 backport 支持 |
+| 8.1         | :heavy_check_mark: | PHP 官方仅对 8.1 提供安全更新                          |
+| 8.2         | :heavy_check_mark: |                                              |
+| 8.3         | :heavy_check_mark: |                                              |
+| 8.4         | :heavy_check_mark: |                                              |
+
+> 这个表格的支持状态是 static-php-cli 对构建对应版本的支持情况，不是 PHP 官方对该版本的支持情况。
 
 ### 支持的扩展
 
@@ -184,7 +186,7 @@ bin/spc --version
 ./bin/spc download --for-extensions="openssl,pcntl,mbstring,pdo_sqlite"
 # 下载依赖时，优先下载有预编译的库（节省编译依赖的时间）
 ./bin/spc download --for-extensions="openssl,curl,mbstring,mbregex" --prefer-pre-built
-# 下载编译不同版本的 PHP (--with-php=x.y，推荐 7.3 ~ 8.3)
+# 下载编译不同版本的 PHP (--with-php=x.y 或 --with-php=x.y.z，推荐 8.1 ~ 8.3)
 ./bin/spc download --for-extensions="openssl,curl,mbstring" --with-php=8.1
 
 # 构建包含 bcmath,openssl,tokenizer,sqlite3,pdo_sqlite,ftp,curl 扩展的 php-cli 和 micro.sfx

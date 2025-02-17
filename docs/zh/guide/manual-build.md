@@ -132,8 +132,8 @@ bin/spc download --for-libs=liblz4,libevent --for-extensions=pcntl,rar,xml
 # 仅下载要编译的库（包括其依赖，使用库名，不包含可选库）
 bin/spc download --for-libs=liblz4,libevent --without-suggestions
 
-# 下载资源时，忽略部分资源的缓存，强制下载（如切换 PHP 版本）
-bin/spc download --for-extensions=curl,pcntl,xml --ignore-cache-sources=php-src --with-php=8.3
+# 下载资源时，忽略部分资源的缓存，强制下载（如切换特定 PHP 版本）
+bin/spc download --for-extensions=curl,pcntl,xml --ignore-cache-sources=php-src --with-php=8.3.10
 
 # 下载资源时，优先下载有预编译包的依赖库（减少编译依赖的时间）
 bin/spc download --for-extensions="curl,pcntl,xml,mbstring" --prefer-pre-built
@@ -141,8 +141,8 @@ bin/spc download --for-extensions="curl,pcntl,xml,mbstring" --prefer-pre-built
 # 下载所有依赖包
 bin/spc download --all
 
-# 下载所有依赖包，并指定下载的 PHP 主版本，可选：7.3，7.4，8.0，8.1，8.2，8.3。
-bin/spc download --all --with-php=8.2
+# 下载所有依赖包，并指定下载的 PHP 主版本，可选：8.1，8.2，8.3，8.4，也可以使用特定的版本，如 8.3.10。
+bin/spc download --all --with-php=8.3
 
 # 下载时显示下载进度条（curl）
 bin/spc download --all --debug
@@ -174,6 +174,17 @@ bin/spc download --all -U "php-src:https://downloads.php.net/~eric/php-8.3.0beta
 
 # 指定下载旧版本的 curl 库
 bin/spc download --all -U "curl:https://curl.se/download/curl-7.88.1.tar.gz"
+```
+
+如果你下载的资源不是链接，而是一个 Git 仓库，你可以使用 `-G` 或 `--custom-git` 重写下载链接，让下载器强制使用你指定的 Git 仓库下载此 source 的包。
+使用方法为 `{source-name}:{branch}:{url}` 即可，可同时重写多个库的下载地址。在使用 `--for-extensions` 选项下载时同样可用。
+
+```bash
+# 例如：下载 master 分支的 php-src
+bin/spc download --for-extensions=redis,phar -G "php-src:master:https://github.com/php/php-src.git"
+
+# 从 swoole-src 仓库下载 master 分支的最新代码，而不是发行版
+bin/spc download --for-extensions=swoole -G "swoole:master:https://github.com/swoole/swoole-src.git"
 ```
 
 ## 命令 doctor - 环境检查
@@ -225,12 +236,12 @@ bin/spc build bcmath,curl,openssl,ftp,posix,pcntl --build-cli
 如果你想构建多个版本的 PHP，且不想每次都重复构建其他依赖库，可以使用 `switch-php-version` 在编译好一个版本后快速切换至另一个版本并编译：
 
 ```shell
-# switch to 8.3
-bin/spc switch-php-version 8.3
+# switch to 8.4
+bin/spc switch-php-version 8.4
 # build
 bin/spc build bcmath,curl,openssl,ftp,posix,pcntl --build-cli
-# switch to 8.0
-bin/spc switch-php-version 8.0
+# switch to 8.1
+bin/spc switch-php-version 8.1
 # build
 bin/spc build bcmath,curl,openssl,ftp,posix,pcntl --build-cli
 ```
@@ -254,6 +265,8 @@ bin/spc build mysqlnd,pdo_mysql --build-all --debug
 - `--enable-zts`: 让编译的 PHP 为线程安全版本（默认为 NTS 版本）
 - `--no-strip`: 编译 PHP 库后不运行 `strip` 裁剪二进制文件缩小体积（不裁剪的 macOS 二进制文件可使用动态链接的第三方扩展）
 - `--with-libs=XXX,YYY`: 编译 PHP 前先编译指定的依赖库，激活部分扩展的可选功能（例如 gd 库的 libavif 等）
+- `--with-config-file-path=XXX`： 查找 `php.ini` 的路径（在 [这里](../faq/index.html#php-ini-的路径是什么) 查看默认路径）
+- `--with-config-file-scan-dir=XXX`： 读取 `php.ini` 后扫描 `.ini` 文件的目录（在 [这里](../faq/index.html#php-ini-的路径是什么) 查看默认路径）
 - `-I xxx=yyy`: 编译前将 INI 选项硬编译到 PHP 内（支持多个选项，别名是 `--with-hardcoded-ini`）
 - `--with-micro-fake-cli`: 在编译 micro 时，让 micro 的 SAPI 伪装为 `cli`（用于兼容一些检查 `PHP_SAPI` 的程序）
 - `--disable-opcache-jit`: 禁用 opcache jit（默认启用）
@@ -480,3 +493,75 @@ static-php-cli 开放的方法非常多，文档中无法一一列举，但只�
 - 如果你想重新构建一次，但不重新下载源码，可以先 `rm -rf buildroot source` 删除编译目录和源码目录，然后重新构建。
 - 如果你想更新某个依赖的版本，可以使用 `bin/spc del-download <source-name>` 删除指定的源码，然后使用 `download <source-name>` 重新下载。
 - 如果你想更新所有依赖的版本，可以使用 `bin/spc download --clean` 删除所有下载的源码，然后重新下载。
+
+## embed 使用
+
+如果你想将 static-php 嵌入到其他 C 语言程序中，可以使用 `--build-embed` 构建一个 embed 版本的 PHP。
+
+```bash
+bin/spc build {your extensions} --build-embed --debug
+```
+
+在通常的情况下，PHP embed 编译后会生成 `php-config`。对于 static-php，我们提供了 `spc-config`，用于获取编译时的参数。
+另外，在使用 embed SAPI（libphp.a）时，你需要使用和编译 libphp 相同的编译器，否则会出现链接错误。
+
+下面是 spc-config 的基本用法：
+
+```bash
+# output all flags and options
+bin/spc spc-config curl,zlib,phar,openssl
+
+# output libs
+bin/spc spc-config curl,zlib,phar,openssl --libs
+
+# output includes
+bin/spc spc-config curl,zlib,phar,openssl --includes
+```
+
+默认情况下，static-php 在不同系统使用的编译器分别是：
+
+- macOS: `clang`
+- Linux (Alpine Linux): `gcc`
+- Linux (glibc based distros, x86_64): `/usr/local/musl/bin/x86_64-linux-musl-gcc`
+- Linux (glibc based distros, aarch64): `/usr/local/musl/bin/aarch64-linux-musl-gcc`
+- FreeBSD: `clang`
+
+下面是一个使用 embed SAPI 的例子：
+
+```c
+// embed.c
+#include <sapi/embed/php_embed.h>
+
+int main(int argc,char **argv){
+
+    PHP_EMBED_START_BLOCK(argc,argv)
+
+    zend_file_handle file_handle;
+
+    zend_stream_init_filename(&file_handle,"embed.php");
+
+    if(php_execute_script(&file_handle) == FAILURE){
+        php_printf("Failed to execute PHP script.\n");
+    }
+
+    PHP_EMBED_END_BLOCK()
+    return 0;
+}
+```
+
+
+```php
+<?php 
+// embed.php
+echo "Hello world!\n";
+```
+
+```bash
+# compile in debian/ubuntu x86_64
+/usr/local/musl/bin/x86_64-linux-musl-gcc embed.c $(bin/spc spc-config bcmath,zlib) -static -o embed
+# compile in macOS/FreeBSD
+clang embed.c $(bin/spc spc-config bcmath,zlib) -o embed
+
+./embed
+# out: Hello world!
+```

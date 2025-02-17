@@ -17,6 +17,10 @@
         "type": "external",
         "source": "apcu"
     },
+    "ast": {
+        "type": "external",
+        "source": "ast"
+    },
     "bcmath": {
         "type": "builtin"
     },
@@ -52,6 +56,13 @@
         "lib-suggests": [
             "qdbm"
         ]
+    },
+    "dio": {
+        "support": {
+            "BSD": "wip"
+        },
+        "type": "external",
+        "source": "dio"
     },
     "dom": {
         "support": {
@@ -206,6 +217,29 @@
             "gmp"
         ]
     },
+    "gmssl": {
+        "support": {
+            "BSD": "wip"
+        },
+        "type": "external",
+        "source": "ext-gmssl",
+        "lib-depends": [
+            "gmssl"
+        ]
+    },
+    "grpc": {
+        "support": {
+            "Windows": "wip",
+            "BSD": "wip"
+        },
+        "type": "external",
+        "source": "grpc",
+        "arg-type-unix": "custom",
+        "cpp-extension": true,
+        "lib-depends": [
+            "grpc"
+        ]
+    },
     "iconv": {
         "support": {
             "BSD": "wip"
@@ -249,7 +283,8 @@
             "BSD": "wip"
         },
         "notes": true,
-        "type": "builtin",
+        "type": "external",
+        "source": "ext-imap",
         "arg-type": "custom",
         "lib-depends": [
             "imap"
@@ -377,6 +412,15 @@
             "zlib"
         ]
     },
+    "msgpack": {
+        "support": {
+            "BSD": "wip"
+        },
+        "type": "external",
+        "source": "msgpack",
+        "arg-type-unix": "with",
+        "arg-type-win": "enable"
+    },
     "mysqli": {
         "type": "builtin",
         "arg-type": "with",
@@ -417,6 +461,13 @@
         "ext-depends": [
             "zlib"
         ]
+    },
+    "opentelemetry": {
+        "support": {
+            "BSD": "wip"
+        },
+        "type": "external",
+        "source": "opentelemetry"
     },
     "parallel": {
         "support": {
@@ -508,7 +559,7 @@
         },
         "notes": true,
         "type": "builtin",
-        "arg-type": "with-prefix",
+        "arg-type": "custom",
         "lib-depends": [
             "postgresql"
         ]
@@ -543,6 +594,19 @@
         "type": "external",
         "source": "rar",
         "cpp-extension": true
+    },
+    "rdkafka": {
+        "support": {
+            "BSD": "wip",
+            "Windows": "wip"
+        },
+        "type": "external",
+        "source": "ext-rdkafka",
+        "arg-type": "custom",
+        "cpp-extension": true,
+        "lib-depends": [
+            "librdkafka"
+        ]
     },
     "readline": {
         "support": {

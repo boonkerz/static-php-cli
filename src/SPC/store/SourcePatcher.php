@@ -6,6 +6,7 @@ namespace SPC\store;
 
 use SPC\builder\BuilderBase;
 use SPC\builder\linux\LinuxBuilder;
+use SPC\builder\linux\SystemUtil;
 use SPC\builder\unix\UnixBuilderBase;
 use SPC\exception\FileSystemException;
 use SPC\exception\RuntimeException;
@@ -25,6 +26,9 @@ class SourcePatcher
         FileSystem::addSourceExtractHook('pdo_sqlsrv', [SourcePatcher::class, 'patchSQLSRVWin32']);
         FileSystem::addSourceExtractHook('yaml', [SourcePatcher::class, 'patchYamlWin32']);
         FileSystem::addSourceExtractHook('libyaml', [SourcePatcher::class, 'patchLibYaml']);
+        FileSystem::addSourceExtractHook('php-src', [SourcePatcher::class, 'patchImapLicense']);
+        FileSystem::addSourceExtractHook('ext-imagick', [SourcePatcher::class, 'patchImagickWith84']);
+        FileSystem::addSourceExtractHook('libaom', [SourcePatcher::class, 'patchLibaomForAlpine']);
     }
 
     /**
@@ -88,7 +92,7 @@ class SourcePatcher
      * @throws RuntimeException
      * @throws FileSystemException
      */
-    public static function patchMicro(): bool
+    public static function patchMicro(string $name = '', string $target = '', ?array $items = null): bool
     {
         if (!file_exists(SOURCE_PATH . '/php-src/sapi/micro/php_micro.c')) {
             return false;
@@ -108,8 +112,12 @@ class SourcePatcher
         // $check = !defined('DEBUG_MODE') ? ' -q' : '';
         // f_passthru('cd ' . SOURCE_PATH . '/php-src && git checkout' . $check . ' HEAD');
 
-        $spc_micro_patches = getenv('SPC_MICRO_PATCHES');
-        $spc_micro_patches = $spc_micro_patches === false ? [] : explode(',', $spc_micro_patches);
+        if ($items !== null) {
+            $spc_micro_patches = $items;
+        } else {
+            $spc_micro_patches = getenv('SPC_MICRO_PATCHES');
+            $spc_micro_patches = $spc_micro_patches === false ? [] : explode(',', $spc_micro_patches);
+        }
         $patch_list = $spc_micro_patches;
         $patches = [];
         $serial = ['80', '81', '82', '83', '84'];
@@ -367,6 +375,36 @@ class SourcePatcher
     }
 
     /**
+     * Patch imap license file for PHP < 8.4
+     */
+    public static function patchImapLicense(): bool
+    {
+        if (!file_exists(SOURCE_PATH . '/php-src/ext/imap/LICENSE') && is_dir(SOURCE_PATH . '/php-src/ext/imap')) {
+            file_put_contents(SOURCE_PATH . '/php-src/ext/imap/LICENSE', file_get_contents(ROOT_DIR . '/src/globals/extra/Apache_LICENSE'));
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Patch imagick for PHP 8.4
+     */
+    public static function patchImagickWith84(): bool
+    {
+        SourcePatcher::patchFile('imagick_php84.patch', SOURCE_PATH . '/php-src/ext/imagick');
+        return true;
+    }
+
+    public static function patchLibaomForAlpine(): bool
+    {
+        if (PHP_OS_FAMILY === 'Linux' && SystemUtil::isMuslDist()) {
+            SourcePatcher::patchFile('libaom_posix_implict.patch', SOURCE_PATH . '/libaom');
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Patch cli SAPI Makefile for Windows.
      *
      * @throws FileSystemException
@@ -412,7 +450,7 @@ class SourcePatcher
                 return true;
             }
             if ($ver_id < 80200) {
-                self::patchFile('spc_fix_libxml2_12_php81.patch', SOURCE_PATH . '/php-src');
+                // self::patchFile('spc_fix_libxml2_12_php81.patch', SOURCE_PATH . '/php-src');
                 self::patchFile('spc_fix_alpine_build_php80.patch', SOURCE_PATH . '/php-src');
                 return true;
             }

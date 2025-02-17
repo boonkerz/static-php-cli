@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2022 Yun Dou <dixyes@gmail.com>
  *
@@ -68,6 +69,7 @@ class openssl extends LinuxLibraryBase
                 "{$env} ./Configure no-shared {$extra} " .
                 '--prefix=/ ' .
                 '--libdir=lib ' .
+                '--openssldir=/etc/ssl ' .
                 '-static ' .
                 "{$zlib_extra}" .
                 'no-legacy ' .

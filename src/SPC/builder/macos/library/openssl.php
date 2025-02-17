@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Copyright (c) 2022 Yun Dou <dixyes@gmail.com>
  *
@@ -53,7 +54,7 @@ class openssl extends MacOSLibraryBase
                 "./Configure no-shared {$extra} " .
                 '--prefix=/ ' . // use prefix=/
                 "--libdir={$lib} " .
-                '--openssldir=/System/Library/OpenSSL ' .
+                '--openssldir=/etc/ssl ' .
                 "darwin64-{$this->builder->getOption('arch')}-cc"
             )
             ->exec('make clean')

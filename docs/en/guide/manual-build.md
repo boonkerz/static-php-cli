@@ -142,8 +142,9 @@ including php-src and the source code of various dependent libraries.
 # Download all dependencies
 bin/spc download --all
 
-# Download all dependent packages, and specify the main version of PHP to download, optional: 7.3, 7.4, 8.0, 8.1, 8.2, 8.3
-bin/spc download --all --with-php=8.2
+# Download all dependent packages, and specify the main version of PHP to download, optional: 8.1, 8.2, 8.3, 8.4
+# Also supports specific version of php release: 8.3.10, 8.2.22, etc.
+bin/spc download --all --with-php=8.3
 
 # Show download progress bar while downloading (curl)
 bin/spc download --all --debug
@@ -170,7 +171,7 @@ bin/spc download  --for-libs=liblz4,libevent --for-extensions=pcntl,rar,xml
 bin/spc download --for-libs=liblz4,libevent --without-suggestions
 
 # When downloading sources, ignore some source caches (always force download, e.g. switching PHP version)
-bin/spc download --for-extensions=curl,pcntl,xml --ignore-cache-sources=php-src --with-php=8.3
+bin/spc download --for-extensions=curl,pcntl,xml --ignore-cache-sources=php-src --with-php=8.3.10
 
 # Set retry times (default is 0)
 bin/spc download --all --retry=2
@@ -201,6 +202,19 @@ bin/spc download --all -U "php-src:https://downloads.php.net/~eric/php-8.3.0beta
 
 # Specifying to download an older version of the curl library
 bin/spc download --all -U "curl:https://curl.se/download/curl-7.88.1.tar.gz"
+```
+
+If the source you download is not a link, but a git repository, you can use `-G` or `--custom-git` to rewrite the download link,
+so that the downloader can force the use of the specified git repository to download packages from this source.
+The usage method is `{source-name}:{branch}:{url}`, which can rewrite the download link of multiple libraries at the same time. 
+It is also available when downloading with the `--for-extensions` option.
+
+```bash
+# Specifying to download the source code of the PHP extension from the specified branch of the git repository
+bin/spc download --for-extensions=redis -G "php-src:master:https://github.com/php/php-src.git"
+
+# Download the latest code from the master branch of the swoole-src repository instead of PECL release version
+bin/spc download --for-extensions=swoole -G "swoole:master:https://github.com/swoole/swoole-src.git"
 ```
 
 ## Command - doctor
@@ -258,12 +272,12 @@ If you want to build multiple versions of PHP and don't want to build other depe
 you can use `switch-php-version` to quickly switch to another version and compile after compiling one version:
 
 ```shell
-# switch to 8.3
-bin/spc switch-php-version 8.3
+# switch to 8.4
+bin/spc switch-php-version 8.4
 # build
 bin/spc build bcmath,curl,openssl,ftp,posix,pcntl --build-cli
-# switch to 8.0
-bin/spc switch-php-version 8.0
+# switch to 8.1
+bin/spc switch-php-version 8.1
 # build
 bin/spc build bcmath,curl,openssl,ftp,posix,pcntl --build-cli
 ```
@@ -290,6 +304,8 @@ You can try to use the following commands:
 - `--enable-zts`: Make compiled PHP thread-safe version (default is NTS version)
 - `--no-strip`: Do not run `strip` after compiling the PHP library to trim the binary file to reduce its size (the macOS binary file without trim can use dynamically linked third-party extensions)
 - `--with-libs=XXX,YYY`: Compile the specified dependent library before compiling PHP, and activate some extended optional functions (such as libavif of the gd library, etc.)
+- `--with-config-file-path=XXX`: Set the path in which to look for `php.ini` (Check [here](../faq/index.html#what-is-the-path-of-php-ini) for default paths)
+- `--with-config-file-scan-dir=XXX`: Set the directory to scan for `.ini` files after reading `php.ini` (Check [here](../faq/index.html#what-is-the-path-of-php-ini) for default paths)
 - `-I xxx=yyy`: Hard compile INI options into PHP before compiling (support multiple options, alias is `--with-hardcoded-ini`)
 - `--with-micro-fake-cli`: When compiling micro, let micro's `PHP_SAPI` pretend to be `cli` (for compatibility with some programs that check `PHP_SAPI`)
 - `--disable-opcache-jit`: Disable opcache jit (enabled by default)
@@ -537,3 +553,76 @@ If you need to build multiple times locally, the following method can save you t
 - If you want to rebuild once, but do not re-download the source code, you can first `rm -rf buildroot source` to delete the compilation directory and source code directory, and then rebuild.
 - If you want to update a version of a dependency, you can use `bin/spc del-download <source-name>` to delete the specified source code, and then use `download <source-name>` to download it again.
 - If you want to update all dependent versions, you can use `bin/spc download --clean` to delete all downloaded sources, and then download them again.
+
+## embed usage
+
+If you want to embed static-php into other C language programs, you can use `--build-embed` to build an embed version of PHP.
+
+```bash
+bin/spc build {your extensions} --build-embed --debug
+```
+
+Under normal circumstances, PHP embed will generate `php-config` after compilation. 
+For static-php, we provide `spc-config` to obtain the parameters during compilation.
+In addition, when using embed SAPI (libphp.a), you need to use the same compiler as libphp, otherwise there will be a link error.
+
+Here is the basic usage of spc-config:
+
+```bash
+# output all flags and options
+bin/spc spc-config curl,zlib,phar,openssl
+
+# output libs
+bin/spc spc-config curl,zlib,phar,openssl --libs
+
+# output includes
+bin/spc spc-config curl,zlib,phar,openssl --includes
+```
+
+By default, static-php uses the following compilers on different systems:
+
+- macOS: `clang`
+- Linux (Alpine Linux): `gcc`
+- Linux (glibc based distros, x86_64): `/usr/local/musl/bin/x86_64-linux-musl-gcc`
+- Linux (glibc based distros, aarch64): `/usr/local/musl/bin/aarch64-linux-musl-gcc`
+- FreeBSD: `clang`
+
+Here is an example of using embed SAPI:
+
+```c
+// embed.c
+#include <sapi/embed/php_embed.h>
+
+int main(int argc,char **argv){
+
+    PHP_EMBED_START_BLOCK(argc,argv)
+
+    zend_file_handle file_handle;
+
+    zend_stream_init_filename(&file_handle,"embed.php");
+
+    if(php_execute_script(&file_handle) == FAILURE){
+        php_printf("Failed to execute PHP script.\n");
+    }
+
+    PHP_EMBED_END_BLOCK()
+    return 0;
+}
+```
+
+
+```php
+<?php 
+// embed.php
+echo "Hello world!\n";
+```
+
+```bash
+# compile in debian/ubuntu x86_64
+/usr/local/musl/bin/x86_64-linux-musl-gcc embed.c $(bin/spc spc-config bcmath,zlib) -static -o embed
+# compile in macOS/FreeBSD
+clang embed.c $(bin/spc spc-config bcmath,zlib) -o embed
+
+./embed
+# out: Hello world!
+```

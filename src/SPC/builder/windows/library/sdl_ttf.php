@@ -22,7 +22,8 @@ class sdl_ttf extends WindowsLibraryBase
                 '-B build ' .
                 '-A x64 ' .
                 '-DCMAKE_BUILD_TYPE=Release ' .
-                // '-DSDL_DISABLE_INSTALL=1 '.
+                '-DSDLTTF_PLUTOSVG=0 ' .
+                '-DSDLTTF_SAMPLES=0 ' .
                 '-DSDL_DISABLE_INSTALL_DOCS=1 ' .
                 '-DSDL_TEST_LIBRARY=0 ' .
                 '-DBUILD_SHARED_LIBS=OFF ' .

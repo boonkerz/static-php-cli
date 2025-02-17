@@ -26,6 +26,16 @@
             "path": "LICENSE"
         }
     },
+    "ast": {
+        "type": "url",
+        "url": "https://pecl.php.net/get/ast",
+        "path": "php-src/ext/ast",
+        "filename": "ast.tgz",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
     "brotli": {
         "type": "ghtar",
         "repo": "google/brotli",
@@ -36,9 +46,13 @@
         }
     },
     "bzip2": {
-        "type": "filelist",
-        "url": "https://sourceware.org/pub/bzip2/",
-        "regex": "/href=\"(?<file>bzip2-(?<version>[^\"]+)\\.tar\\.gz)\"/",
+        "alt": {
+            "type": "filelist",
+            "url": "https://sourceware.org/pub/bzip2/",
+            "regex": "/href=\"(?<file>bzip2-(?<version>[^\"]+)\\.tar\\.gz)\"/"
+        },
+        "type": "url",
+        "url": "https://dl.static-php.dev/static-php-cli/deps/bzip2/bzip2-1.0.8.tar.gz",
         "provide-pre-built": true,
         "license": {
             "type": "text",
@@ -53,6 +67,16 @@
         "license": {
             "type": "file",
             "path": "COPYING"
+        }
+    },
+    "dio": {
+        "type": "url",
+        "url": "https://pecl.php.net/get/dio",
+        "path": "php-src/ext/dio",
+        "filename": "dio.tgz",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
         }
     },
     "ext-ds": {
@@ -78,6 +102,15 @@
         "type": "git",
         "url": "https://github.com/mario-deluna/php-glfw",
         "rev": "master",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "ext-gmssl": {
+        "type": "ghtar",
+        "repo": "gmssl/GmSSL-PHP",
+        "path": "php-src/ext/gmssl",
         "license": {
             "type": "file",
             "path": "LICENSE"
@@ -129,11 +162,32 @@
             "path": "LICENSE"
         }
     },
+    "ext-imap": {
+        "type": "url",
+        "url": "https://pecl.php.net/get/imap",
+        "path": "php-src/ext/imap",
+        "filename": "imap.tgz",
+        "license": {
+            "type": "file",
+            "path": [
+                "LICENSE"
+            ]
+        }
+    },
     "ext-memcache": {
         "type": "url",
         "url": "https://pecl.php.net/get/memcache",
         "path": "php-src/ext/memcache",
         "filename": "memcache.tgz",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "ext-rdkafka": {
+        "type": "ghtar",
+        "repo": "arnaud-lb/php-rdkafka",
+        "path": "php-src/ext/rdkafka",
         "license": {
             "type": "file",
             "path": "LICENSE"
@@ -239,6 +293,24 @@
             "text": "Since version 6, GMP is distributed under the dual licenses, GNU LGPL v3 and GNU GPL v2. These licenses make the library free to use, share, and improve, and allow you to pass on the result. The GNU licenses give freedoms, but also set firm restrictions on the use with non-free programs."
         }
     },
+    "gmssl": {
+        "type": "ghtar",
+        "repo": "guanzhi/GmSSL",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "grpc": {
+        "type": "git",
+        "rev": "v1.68.x",
+        "url": "https://github.com/grpc/grpc.git",
+        "provide-pre-built": true,
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
     "icu": {
         "type": "ghrel",
         "repo": "unicode-org/icu",
@@ -296,6 +368,16 @@
             "path": "LICENSE"
         }
     },
+    "libaom": {
+        "type": "git",
+        "rev": "main",
+        "url": "https://aomedia.googlesource.com/aom",
+        "provide-pre-built": true,
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
     "libargon2": {
         "type": "git",
         "rev": "master",
@@ -331,6 +413,17 @@
             "path": "LICENSE.md"
         }
     },
+    "libde265": {
+        "type": "ghrel",
+        "repo": "strukturag/libde265",
+        "match": "libde265-.+\\.tar\\.gz",
+        "prefer-stable": true,
+        "provide-pre-built": true,
+        "license": {
+            "type": "file",
+            "path": "COPYING"
+        }
+    },
     "libevent": {
         "type": "ghrel",
         "repo": "libevent/libevent",
@@ -359,6 +452,17 @@
         "license": {
             "type": "file",
             "path": "LICENSE"
+        }
+    },
+    "libheif": {
+        "type": "ghrel",
+        "repo": "strukturag/libheif",
+        "match": "libheif-.+\\.tar\\.gz",
+        "prefer-stable": true,
+        "provide-pre-built": true,
+        "license": {
+            "type": "file",
+            "path": "COPYING"
         }
     },
     "libiconv": {
@@ -422,6 +526,14 @@
         "type": "git",
         "url": "https://github.com/alanxz/rabbitmq-c.git",
         "rev": "master",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "librdkafka": {
+        "type": "ghtar",
+        "repo": "confluentinc/librdkafka",
         "license": {
             "type": "file",
             "path": "LICENSE"
@@ -541,8 +653,8 @@
     "micro": {
         "type": "git",
         "path": "php-src/sapi/micro",
-        "rev": "master",
-        "url": "https://github.com/easysoft/phpmicro",
+        "rev": "84beta",
+        "url": "https://github.com/static-php/phpmicro",
         "license": {
             "type": "file",
             "path": "LICENSE"
@@ -554,6 +666,16 @@
         "path": "php-src/ext/mongodb",
         "match": "mongodb.+\\.tgz",
         "prefer-stable": true,
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
+        }
+    },
+    "msgpack": {
+        "type": "url",
+        "url": "https://pecl.php.net/get/msgpack",
+        "path": "php-src/ext/msgpack",
+        "filename": "msgpack.tgz",
         "license": {
             "type": "file",
             "path": "LICENSE"
@@ -604,6 +726,16 @@
         "license": {
             "type": "file",
             "path": "LICENSE.txt"
+        }
+    },
+    "opentelemetry": {
+        "type": "url",
+        "url": "https://pecl.php.net/get/opentelemetry",
+        "path": "php-src/ext/opentelemetry",
+        "filename": "opentelemetry.tgz",
+        "license": {
+            "type": "file",
+            "path": "LICENSE"
         }
     },
     "parallel": {
@@ -692,13 +824,16 @@
         }
     },
     "redis": {
-        "type": "git",
+        "type": "url",
+        "url": "https://pecl.php.net/get/redis",
         "path": "php-src/ext/redis",
-        "rev": "5.3.7",
-        "url": "https://github.com/phpredis/phpredis",
+        "filename": "redis.tgz",
         "license": {
             "type": "file",
-            "path": "COPYING"
+            "path": [
+                "LICENSE",
+                "COPYING"
+            ]
         }
     },
     "snappy": {
@@ -723,7 +858,7 @@
     },
     "sqlite": {
         "type": "url",
-        "url": "https://www.sqlite.org/2023/sqlite-autoconf-3430200.tar.gz",
+        "url": "https://www.sqlite.org/2024/sqlite-autoconf-3450200.tar.gz",
         "provide-pre-built": true,
         "license": {
             "type": "text",
@@ -741,13 +876,18 @@
         }
     },
     "swoole": {
-        "type": "ghtar",
         "path": "php-src/ext/swoole",
-        "repo": "swoole/swoole-src",
-        "prefer-stable": true,
+        "type": "git",
+        "rev": "master",
+        "url": "https://github.com/swoole/swoole-src.git",
         "license": {
             "type": "file",
             "path": "LICENSE"
+        },
+        "alt": {
+            "type": "ghtar",
+            "repo": "swoole/swoole-src",
+            "prefer-stable": true
         }
     },
     "swow": {
